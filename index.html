@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Schibsted+Grotesk:wght@400;600;800&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.js"></script>
 <style>
 /* Layout: the picture is the question; it gets the screen, the brass timeline ruler sits under it */
 :root{
@@ -67,6 +69,12 @@ a{color:var(--brass)}
 .ask{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:14px 2px 0}
 .ask h2{font-family:var(--serif);font-weight:400;font-size:clamp(1.3rem,4vw,1.7rem);margin:0}
 .ask p{margin:0;color:var(--muted);font-size:.92rem}
+.pano{height:min(58vh,580px);min-height:260px;border-radius:18px;overflow:hidden;background:#0b100d}
+.pano .pnlm-load-box{background:rgba(20,28,23,.85);border-radius:12px}
+.pano .pnlm-about-msg{display:none!important}
+.hint{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.skip{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:.88rem;padding:4px 0}
+.ai-note{font-size:.88rem;color:var(--muted)}
 .lightbox{position:fixed;inset:0;z-index:20;background:rgba(5,8,6,.94);display:grid;place-items:center;padding:16px;cursor:zoom-out}
 .lightbox img{max-width:100%;max-height:100%;object-fit:contain}
 
@@ -163,9 +171,14 @@ a{color:var(--brass)}
       </div>
     </div>
     <div class="frame" id="frame"><div class="blur" id="blur"></div><img id="photo" alt="Tahmin edilecek görsel"><span class="zoom">büyüt</span></div>
+    <div class="pano" id="pano" hidden></div>
     <div class="ask">
       <h2>Bu görsel hangi yıla ait?</h2>
-      <p>Olayın yaşandığı ya da eserin, yapının tamamlandığı yıl.</p>
+      <p id="askHelp">Olayın yaşandığı ya da eserin, yapının tamamlandığı yıl.</p>
+    </div>
+    <div class="row" style="justify-content:space-between;margin:4px 2px 0">
+      <span class="hint" id="panoHint" hidden>Sürükleyerek etrafa bak, tekerlek ya da iki parmakla yakınlaştır</span>
+      <button class="skip" id="skipBtn">Bu görseli geç</button>
     </div>
     <div class="dial">
       <div class="readout" aria-live="polite"><span class="era" id="era">MS</span><span class="yr" id="yr">1500</span></div>
@@ -196,6 +209,7 @@ a{color:var(--brass)}
     <div class="info">
       <span class="eyebrow">Vikipedi'den</span>
       <p class="fact" id="fact" hidden></p>
+      <p class="ai-note" id="aiNote" hidden>Bu sahneyi yapay zeka, olayın Vikipedi açıklamasından çizdi. Kıyafet ya da mimari gibi detaylar tarihsel olarak hatalı olabilir.</p>
       <p class="extract" id="extract">Yükleniyor…</p>
       <div class="links">
         <a class="wiki" id="wikiLink" href="#" target="_blank" rel="noopener">Vikipedi'de oku ↗</a>
@@ -229,6 +243,13 @@ const EVENTS = [{"id":"istanbul","y":1453,"a":false,"t":"İstanbul'un Fethi","en
 
 // Kendi görselini kullanmak istediğin olayların id'lerini buraya yaz ve dosyayı img/<id>.jpg olarak koy.
 const LOCAL_IMAGES = [];
+
+// ===== YAPAY ZEKA AYARLARI =====
+// Cloudflare Worker adresini tırnakların arasına yapıştır, ör. 'https://yil-kac.kullaniciadin.workers.dev'
+// Boş bırakırsan oyun sadece Vikipedi'deki gerçek görsellerle çalışır.
+const WORKER_URL = '';
+// 'pano' = geniş panorama (önerilen), 'sphere' = tam 360 derece küre (deneysel)
+const AI_MODE = 'pano';
 
 // ---------- TIME SCALE ----------
 const MINY = -3000, MAXY = 2026;
@@ -334,15 +355,56 @@ async function prepareRounds(){
   if(ready.length < 5) throw new Error('few');
   return ready;
 }
+// ---- AI rounds from the Worker ----
+function recentAI(){ try{ return JSON.parse(store.get('yk-recent-ai')||'[]'); }catch(e){ return []; } }
+function rememberAI(key){ const r = recentAI().filter(k=>k!==key).concat([key]).slice(-30); store.set('yk-recent-ai', JSON.stringify(r)); }
+async function lookupTitle(title){
+  try{
+    const u = 'https://en.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&redirects=1&prop=langlinks&lllang=tr&titles=' + encodeURIComponent(title);
+    const j = await (await fetch(u)).json();
+    const p = (j.query.pages||[])[0] || {};
+    return { tr: p.langlinks && p.langlinks[0] ? p.langlinks[0].title : null, enPage: p.title || title };
+  }catch(e){ return { tr:null, enPage:title }; }
+}
+async function aiRound(){
+  const taken = new Set((S ? S.rounds : []).filter(Boolean).map(e=>e.key));
+  const ex = recentAI().concat([...taken]).join(',');
+  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 60000);
+  const r = await fetch(`${WORKER_URL.replace(/\/$/,'')}/round?mode=${AI_MODE}&exclude=${encodeURIComponent(ex)}`, { signal: ctrl.signal });
+  clearTimeout(to);
+  if(!r.ok) throw new Error('worker');
+  const j = await r.json();
+  if(!j.img || typeof j.year !== 'number') throw new Error('worker data');
+  await loadImg(j.img, 30000);
+  const meta = await lookupTitle(j.title);
+  rememberAI(j.key);
+  return { id:'ai:'+j.key, key:j.key, kind:'ai', mode:j.mode || AI_MODE, y:j.year, a:false,
+           t: meta.tr || j.title, en:j.title, tr:meta.tr, enPage:meta.enPage, img:j.img, f:j.text, file:null };
+}
+// ---- fallback: real Wikipedia images ----
+async function realRound(){
+  if(!S.real || !S.real.length){
+    S.real = await prepareRounds();
+    const r = recent().concat(S.real.map(e=>e.id)).slice(-60); store.set('yk-recent', JSON.stringify(r));
+  }
+  const ev = S.real.shift(); ev.kind = 'real'; return ev;
+}
+async function makeRound(){
+  let ev = null;
+  if(WORKER_URL){ try{ ev = await aiRound(); }catch(e){ ev = null; } }
+  if(!ev) ev = await realRound();
+  getInfo(ev);
+  return ev;
+}
+function prefetchNext(){ if(S && !S.next && S.r < 4) S.next = makeRound().catch(()=>null); }
+
 async function startGame(){
   const btn = $('startBtn'), st = $('status');
-  btn.disabled = true; st.className = 'status'; st.textContent = 'Görseller hazırlanıyor…';
-  if(!$('over').hidden){ show('start'); }
+  btn.disabled = true; st.className = 'status';
+  st.textContent = WORKER_URL ? 'Sahne çiziliyor, bu birkaç saniye sürebilir…' : 'Görseller hazırlanıyor…';
   try{
-    const rounds = await prepareRounds();
-    const r = recent().concat(rounds.map(e=>e.id)).slice(-60); store.set('yk-recent', JSON.stringify(r));
-    S = { rounds, r:0, total:0, log:[] };
-    rounds.forEach(getInfo);
+    S = { rounds:[], r:0, total:0, log:[], real:null, next:null };
+    S.rounds[0] = await makeRound();
     st.textContent = '';
     showGuess();
   }catch(e){
@@ -351,6 +413,23 @@ async function startGame(){
   }finally{ btn.disabled = false; }
 }
 function setPhoto(frameImg, blurEl, src){ frameImg.src = src; blurEl.style.backgroundImage = `url("${src}")`; }
+let viewer = null;
+function showPicture(ev){
+  if(viewer){ try{ viewer.destroy(); }catch(e){} viewer = null; }
+  const useP = ev.kind === 'ai' && window.pannellum;
+  $('frame').hidden = useP; $('pano').hidden = !useP; $('panoHint').hidden = !useP;
+  $('askHelp').textContent = ev.kind === 'ai' ? 'Bu sahne hangi yılda yaşandı?' : 'Olayın yaşandığı ya da eserin, yapının tamamlandığı yıl.';
+  if(!useP){ setPhoto($('photo'), $('blur'), ev.img); return; }
+  const sphere = ev.mode === 'sphere';
+  $('pano').innerHTML = '';
+  viewer = pannellum.viewer('pano', {
+    type:'equirectangular', panorama:ev.img, autoLoad:true, crossOrigin:'anonymous',
+    haov: sphere ? 360 : 150, vaov: sphere ? 180 : 50, vOffset:0,
+    hfov: sphere ? 100 : 75, minHfov: 25, maxHfov: sphere ? 115 : 95,
+    avoidShowingBackground:true, showZoomCtrl:true, showFullscreenCtrl:true,
+    compass:false, keyboardZoom:false, mouseZoom:true, draggable:true, friction:.2
+  });
+}
 function setYear(y, dir=0, silent=false){
   y = clampY(Math.round(y)); if(y === 0) y = (dir || (y - curY)) < 0 ? -1 : 1;
   if(y !== curY && !silent && Math.floor(y/10) !== Math.floor(curY/10)) sfx.tick();
@@ -362,11 +441,25 @@ function setYear(y, dir=0, silent=false){
 function showGuess(){
   const ev = S.rounds[S.r];
   $('roundNo').textContent = S.r + 1; $('scoreNow').textContent = S.total;
-  setPhoto($('photo'), $('blur'), ev.img);
   const r = $('ruler'); buildRuler(r);
   const n = document.createElement('div'); n.className='needle'; n.id='needle'; n.innerHTML='<div class="grip"></div>'; r.append(n);
   curY = 1500; setYear(1500, 0, true);
+  $('lockBtn').disabled = false;
   show('guess');
+  showPicture(ev);
+  prefetchNext();
+}
+async function takeNext(){
+  const p = S.next; S.next = null;
+  const ev = p ? await p : null;
+  return ev || await makeRound();
+}
+async function skipRound(){
+  const b = $('skipBtn'); if(b.disabled) return;
+  b.disabled = true; b.textContent = 'Yeni görsel geliyor…';
+  try{ S.rounds[S.r] = await takeNext(); showGuess(); }
+  catch(e){}
+  finally{ b.disabled = false; b.textContent = 'Bu görseli geç'; }
 }
 function lockGuess(){
   if($('guess').hidden) return;
@@ -402,6 +495,7 @@ function showReveal(ev, g, pts){
   const wl = $('wikiLink'); wl.href = ev.tr ? `https://tr.wikipedia.org/wiki/${encodeURIComponent(ev.tr.replace(/ /g,'_'))}` : `https://en.wikipedia.org/wiki/${encodeURIComponent((ev.enPage||ev.en).replace(/ /g,'_'))}`;
   wl.textContent = ev.tr ? "Vikipedi'de oku ↗" : "Vikipedi'de oku (İngilizce) ↗";
   const cr = $('credit'); cr.hidden = !ev.file; if(ev.file) cr.href = `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(ev.file)}`;
+  $('aiNote').hidden = ev.kind !== 'ai';
   const token = S.r;
   getInfo(ev).then(info => {
     if(!S || S.r !== token) return;
@@ -419,10 +513,19 @@ function countUp(el, to){
   const step = now => { const k = Math.min(1,(now-t0)/dur); el.textContent = '+' + Math.round(to*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
-function nextRound(){
-  S.r++;
-  if(S.r >= 5) return showOver();
-  showGuess();
+let advancing = false;
+async function nextRound(){
+  if(advancing) return;
+  if(S.r >= 4){ S.r++; return showOver(); }
+  advancing = true;
+  const b = $('nextBtn'); b.disabled = true; b.textContent = WORKER_URL ? 'Sahne çiziliyor…' : 'Hazırlanıyor…';
+  try{
+    S.rounds[S.r + 1] = await takeNext();
+    S.r++;
+    showGuess();
+  }catch(e){
+    b.textContent = 'Tekrar dene';
+  }finally{ b.disabled = false; advancing = false; }
 }
 const sq = p => p >= 900 ? '🟩' : p >= 500 ? '🟨' : p >= 150 ? '🟧' : '🟥';
 function showOver(){
@@ -478,6 +581,7 @@ function updateBest(){
 updateBest();
 $('startBtn').onclick = startGame;
 $('lockBtn').onclick = lockGuess;
+$('skipBtn').onclick = skipRound;
 $('nextBtn').onclick = nextRound;
 $('againBtn').onclick = () => { show('start'); startGame(); };
 $('soundBtn').textContent = soundOn ? 'ses açık' : 'ses kapalı';
