@@ -180,6 +180,7 @@ a{color:var(--brass)}
       <span class="hint" id="panoHint" hidden>Sürükleyerek etrafa bak, tekerlek ya da iki parmakla yakınlaştır</span>
       <button class="skip" id="skipBtn">Bu görseli geç</button>
     </div>
+    <p class="hint" id="aiWarn" style="color:var(--truth);margin:6px 2px 0" hidden></p>
     <div class="dial">
       <div class="readout" aria-live="polite"><span class="era" id="era">MS</span><span class="yr" id="yr">1500</span></div>
       <div class="ruler-wrap"><div class="ruler live" id="ruler" tabindex="0" role="slider" aria-label="Yıl tahmini"></div></div>
@@ -372,7 +373,7 @@ async function aiRound(){
   const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 60000);
   const r = await fetch(`${WORKER_URL.replace(/\/$/,'')}/round?mode=${AI_MODE}&exclude=${encodeURIComponent(ex)}`, { signal: ctrl.signal });
   clearTimeout(to);
-  if(!r.ok) throw new Error('worker');
+  if(!r.ok){ let t = ''; try{ t = (await r.text()).slice(0,160); }catch(e){} throw new Error(`Worker ${r.status} ${t}`); }
   const j = await r.json();
   if(!j.img || typeof j.year !== 'number') throw new Error('worker data');
   await loadImg(j.img, 30000);
@@ -390,9 +391,19 @@ async function realRound(){
   const ev = S.real.shift(); ev.kind = 'real'; return ev;
 }
 async function makeRound(){
-  let ev = null;
-  if(WORKER_URL){ try{ ev = await aiRound(); }catch(e){ ev = null; } }
-  if(!ev) ev = await realRound();
+  let ev = null, err = null;
+  if(WORKER_URL){
+    try{ ev = await aiRound(); }
+    catch(e){
+      console.warn('Yapay zeka turu alınamadı:', e);
+      const m = String((e && e.message) || e);
+      err = e && e.name === 'AbortError' ? 'Worker 60 saniyede cevap vermedi'
+          : /Failed to fetch|NetworkError|Load failed/i.test(m) ? "Worker'a bağlanılamadı (adres yanlış ya da ALLOWED_ORIGIN siteyle eşleşmiyor)"
+          : m === 'img' || m === 'timeout' ? 'Worker cevap verdi ama görsel yüklenemedi'
+          : m;
+    }
+  }
+  if(!ev){ ev = { ...(await realRound()) }; ev.aiErr = err; }
   getInfo(ev);
   return ev;
 }
@@ -416,6 +427,9 @@ function setPhoto(frameImg, blurEl, src){ frameImg.src = src; blurEl.style.backg
 let viewer = null;
 function showPicture(ev){
   if(viewer){ try{ viewer.destroy(); }catch(e){} viewer = null; }
+  const w = $('aiWarn');
+  w.hidden = !(WORKER_URL && ev.kind !== 'ai');
+  w.textContent = `Yapay zeka sahnesi alınamadı, gerçek görsel gösteriliyor. Sebep: ${ev.aiErr || 'bilinmiyor'}`;
   const useP = ev.kind === 'ai' && window.pannellum;
   $('frame').hidden = useP; $('pano').hidden = !useP; $('panoHint').hidden = !useP;
   $('askHelp').textContent = ev.kind === 'ai' ? 'Bu sahne hangi yılda yaşandı?' : 'Olayın yaşandığı ya da eserin, yapının tamamlandığı yıl.';
