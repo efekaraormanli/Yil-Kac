@@ -4,14 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Yıl Kaç?</title>
-<meta name="description" content="Bir görsel gelir, hangi yıla ait olduğunu tahmin edersin. Tarih tahmin oyunu.">
+<meta name="description" content="Bir görsel gelir, hangi yıla ait olduğunu tahmin edersin. Her gün herkes için aynı 5 görsel.">
+<meta property="og:title" content="Yıl Kaç?">
+<meta property="og:description" content="Bir görsel gelir, hangi yıla ait olduğunu tahmin edersin. Her gün herkes için aynı 5 görsel.">
+<meta name="theme-color" content="#141c17">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Schibsted+Grotesk:wght@400;600;800&family=IBM+Plex+Mono:wght@500;700&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.js"></script>
 <style>
-/* Layout: the picture is the question; it gets the screen, the brass timeline ruler sits under it */
 :root{
   --bg:#141c17;
   --surface:#1c2620;
@@ -30,7 +32,7 @@
 }
 html{box-sizing:border-box;min-height:100%;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:inherit}
-body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
 [hidden]{display:none!important}
 img{max-width:100%}
 button,input{font:inherit;color:inherit}
@@ -40,36 +42,72 @@ a{color:var(--brass)}
 .app{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:14px 32px}
 .eyebrow{font-size:.74rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:600}
 .btn{border:0;border-radius:12px;padding:15px 26px;font-weight:800;font-size:1.05rem;background:var(--brass);color:#1b1408;
-  box-shadow:0 4px 0 var(--brass-deep);transition:transform .07s, box-shadow .07s}
+  box-shadow:0 4px 0 var(--brass-deep);transition:transform .07s, box-shadow .07s, filter .15s}
+.btn:hover{filter:brightness(1.06)}
 .btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--brass-deep)}
 .btn:disabled{opacity:.5;cursor:wait}
 .btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.ghost:active{transform:translateY(1px)}
+.btn.outline{background:transparent;color:var(--brass);box-shadow:inset 0 0 0 1.5px var(--brass)}
+.btn.outline:active{transform:translateY(1px)}
 .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-.brand{font-family:var(--serif);font-size:1.25rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px 12px;flex-wrap:wrap;margin-bottom:14px}
+.brand{font-family:var(--serif);font-size:1.25rem;background:none;border:0;padding:0;color:var(--ink)}
 .brand b{color:var(--brass);font-weight:400}
+.mode-tag{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-left:10px;letter-spacing:.04em}
 .stat{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
 .stat strong{color:var(--ink);font-weight:700}
 .icon-btn{background:none;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.dots{display:flex;gap:6px;align-items:center}
+.dots i{width:12px;height:12px;border-radius:3px;background:var(--surface-2);transition:background .3s, transform .3s}
+.dots i.cur{box-shadow:inset 0 0 0 2px var(--brass)}
+.dots i.s4{background:#5fbf7a}.dots i.s3{background:#e2c044}.dots i.s2{background:#e8893a}.dots i.s1{background:var(--truth)}
+.enter{animation:rise .38s cubic-bezier(.2,.9,.25,1)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
 /* ---------- start ---------- */
-.start{display:grid;gap:26px;padding-block:7vh 0}
-.title-xl{font-family:var(--serif);font-weight:400;font-size:clamp(3.4rem,14vw,7.2rem);line-height:.95;margin:0}
+.start{display:grid;gap:22px;padding-block:4vh 0}
+.title-xl{font-family:var(--serif);font-weight:400;font-size:clamp(3rem,11vw,6rem);line-height:.95;margin:0}
 .title-xl span{color:var(--brass)}
-.lede{max-width:44ch;color:var(--muted);font-size:1.12rem;line-height:1.55;margin:0}
+.lede{max-width:46ch;color:var(--muted);font-size:1.08rem;line-height:1.55;margin:0}
 .lede b{color:var(--ink);font-weight:600}
+.modes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
+@media (max-width:760px){ .modes{grid-template-columns:1fr} }
+.card{background:var(--surface);border-radius:18px;padding:20px;display:grid;gap:14px;align-content:start;min-width:0}
+.card.daily{background:linear-gradient(160deg,#2c2a18 0%,var(--surface) 70%);box-shadow:inset 0 0 0 1px rgba(217,164,65,.38)}
+.card h3{font-family:var(--serif);font-weight:400;font-size:1.45rem;margin:0;line-height:1.2}
+.card p{margin:0;color:var(--muted);line-height:1.5}
+.card p b{color:var(--ink);font-weight:600}
+.flame{font-family:var(--mono);font-weight:700;color:var(--brass)}
+.field{display:grid;gap:8px}
+.flabel{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:0;border-radius:999px;padding:8px 13px;background:var(--surface-2);font-size:.9rem;font-weight:600;color:var(--muted);transition:background .15s,color .15s}
+.chip small{font-family:var(--mono);font-size:.72rem;opacity:.7;margin-left:5px}
+.chip[aria-pressed="true"]{background:var(--brass);color:#1b1408}
+.seg{display:inline-flex;background:var(--bg);border-radius:12px;padding:4px;gap:4px;justify-self:start}
+.seg button{border:0;background:none;border-radius:9px;padding:8px 16px;font-weight:700;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--brass)}
+.fnote{font-size:.86rem}
+.toggle{display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-weight:600}
+.toggle input{accent-color:var(--brass);width:18px;height:18px;margin:2px 0 0;flex:none}
+.toggle small{display:block;font-weight:400;color:var(--muted);font-size:.84rem;margin-top:2px}
+.toggle.off{opacity:.5;cursor:not-allowed}
 .status{color:var(--muted);font-size:.95rem;min-height:1.4em}
 .status.err{color:var(--truth)}
+.loadbar{height:3px;border-radius:2px;max-width:320px;background:linear-gradient(90deg,transparent,var(--brass),transparent) no-repeat;background-size:40% 100%;animation:slide 1.1s linear infinite}
+@keyframes slide{from{background-position:-60% 0}to{background-position:160% 0}}
 
 /* ---------- picture ---------- */
-.frame{position:relative;border-radius:18px;overflow:hidden;background:#0b100d;height:min(56vh,560px);min-height:240px;cursor:zoom-in}
+.frame{position:relative;border-radius:18px;overflow:hidden;background:#0b100d;height:min(54vh,560px);min-height:220px;cursor:zoom-in}
 .frame .blur{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(28px) brightness(.45);transform:scale(1.1)}
-.frame img{position:relative;display:block;width:100%;height:100%;object-fit:contain}
+.frame img{position:relative;display:block;width:100%;height:100%;object-fit:contain;animation:fadein .45s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
 .frame .zoom{position:absolute;right:10px;top:10px;font-family:var(--mono);font-size:.72rem;color:#fff;background:rgba(0,0,0,.55);padding:4px 10px;border-radius:999px;pointer-events:none}
-.ask{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:14px 2px 0}
-.ask h2{font-family:var(--serif);font-weight:400;font-size:clamp(1.3rem,4vw,1.7rem);margin:0}
+.ask{display:flex;justify-content:space-between;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin:14px 2px 0}
+.ask h2{font-family:var(--serif);font-weight:400;font-size:clamp(1.25rem,4vw,1.7rem);margin:0}
 .ask p{margin:0;color:var(--muted);font-size:.92rem}
-.pano{height:min(58vh,580px);min-height:260px;border-radius:18px;overflow:hidden;background:#0b100d}
+.pano{height:min(56vh,580px);min-height:240px;border-radius:18px;overflow:hidden;background:#0b100d}
 .pano .pnlm-load-box{background:rgba(20,28,23,.85);border-radius:12px}
 .pano .pnlm-about-msg{display:none!important}
 .hint{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
@@ -77,12 +115,20 @@ a{color:var(--brass)}
 .ai-note{font-size:.88rem;color:var(--muted)}
 .lightbox{position:fixed;inset:0;z-index:20;background:rgba(5,8,6,.94);display:grid;place-items:center;padding:16px;cursor:zoom-out}
 .lightbox img{max-width:100%;max-height:100%;object-fit:contain}
+.timer{position:relative;height:26px;margin:12px 2px 0;border-radius:8px;background:var(--surface);overflow:hidden}
+.timer i{position:absolute;inset:0;background:var(--brass);opacity:.35;transform-origin:left center}
+.timer span{position:relative;display:block;text-align:center;line-height:26px;font-family:var(--mono);font-weight:700;font-size:.85rem}
+.timer.low i{background:var(--truth);opacity:.55}
+.timer.low span{color:#fff}
 
 /* ---------- dial ---------- */
-.dial{margin-top:10px;display:grid;gap:10px}
+.dial{margin-top:10px;display:grid;gap:8px}
 .readout{display:flex;align-items:baseline;justify-content:center;gap:12px;font-family:var(--mono);font-variant-numeric:tabular-nums}
-.readout .era{font-size:1.1rem;color:var(--brass);font-weight:700;letter-spacing:.08em;min-width:3ch;text-align:right}
-.readout .yr{font-size:clamp(3rem,12vw,5rem);font-weight:700;line-height:1;min-width:4.2ch}
+.readout .era{font-family:var(--mono);font-size:1.1rem;color:var(--brass);font-weight:700;letter-spacing:.08em;min-width:3ch;text-align:right;background:none;border:0;padding:4px 6px;border-radius:8px}
+.readout .era:hover,.readout .yr:hover{background:var(--surface)}
+.readout .yr{font-family:var(--mono);font-size:clamp(3rem,12vw,5rem);font-weight:700;line-height:1;min-width:4.2ch;background:none;border:0;padding:0 6px;border-radius:12px;cursor:text}
+.yr-in{font-family:var(--mono);font-size:clamp(3rem,12vw,5rem);font-weight:700;line-height:1;width:4.4ch;text-align:center;background:var(--surface);border:0;border-radius:12px;padding:0;box-shadow:inset 0 0 0 2px var(--brass)}
+.dial-hint{text-align:center}
 .ruler-wrap{overflow:hidden;padding-top:26px}
 .ruler{position:relative;height:78px;border-radius:10px;background:var(--surface);touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:inset 0 2px 0 var(--brass)}
 .ruler.live{cursor:ew-resize}
@@ -94,14 +140,15 @@ a{color:var(--brass)}
 .needle::before{content:"";position:absolute;left:-1.5px;top:14px;bottom:0;width:3px;background:var(--brass);border-radius:2px}
 .needle::after{content:"";position:absolute;left:-8px;top:0;border:8px solid transparent;border-top:12px solid var(--brass);border-bottom:0}
 .needle .grip{position:absolute;left:-14px;bottom:-14px;width:28px;height:28px;border-radius:50%;background:var(--brass);box-shadow:0 0 0 4px var(--bg)}
-.nudges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:8px}
-.nudges button{min-width:58px;border:0;border-radius:10px;padding:10px 12px;background:var(--surface);font-family:var(--mono);font-weight:700}
+.nudges{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:6px}
+.nudges button{min-width:52px;border:0;border-radius:10px;padding:10px 8px;background:var(--surface);font-family:var(--mono);font-weight:700;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .nudges button:active{background:var(--surface-2)}
 .lock-row{display:flex;justify-content:center;margin-top:4px}
 .lock-row .btn{min-width:240px}
 .pin{position:absolute;top:-24px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none}
 .pin b{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--brass)}
 .pin span{width:2px;height:70px;background:var(--brass);opacity:.8}
+.pin.sm span{height:58px}
 .truth-line{position:absolute;top:-26px;bottom:-4px;width:3px;margin-left:-1.5px;background:var(--truth);border-radius:2px;transition:left .9s cubic-bezier(.2,.9,.2,1)}
 .span-bar{position:absolute;top:30px;height:4px;background:var(--truth);opacity:.35;border-radius:2px;transition:all .9s cubic-bezier(.2,.9,.2,1)}
 
@@ -119,6 +166,18 @@ a{color:var(--brass)}
 .you .pt{font-family:var(--mono);font-weight:700;font-size:1.6rem;font-variant-numeric:tabular-nums}
 .you .pt.ace{color:var(--brass)}
 .badge{justify-self:start;font-weight:800;font-size:.85rem;padding:4px 11px;border-radius:999px;background:var(--surface-2)}
+.pop{animation:pop .5s cubic-bezier(.2,1.7,.4,1)}
+@keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.zoom-wrap{margin-top:6px}
+.zoom-wrap .ruler-wrap{padding-top:28px}
+.zr{position:relative;height:64px;border-radius:10px;background:var(--surface);box-shadow:inset 0 2px 0 var(--line)}
+.zr .band{position:absolute;top:0;bottom:0;background:rgba(159,220,174,.13);box-shadow:inset 1px 0 0 rgba(159,220,174,.5),inset -1px 0 0 rgba(159,220,174,.5)}
+.zr .truth-line{top:-24px;transition:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:.82rem;color:var(--muted)}
+.legend i{display:inline-block;vertical-align:-1px;margin-right:6px}
+.legend .lg-g{width:11px;height:11px;border-radius:50%;background:var(--brass)}
+.legend .lg-t{width:3px;height:12px;background:var(--truth)}
+.legend .lg-b{width:14px;height:10px;background:rgba(159,220,174,.25);box-shadow:inset 0 0 0 1px rgba(159,220,174,.6)}
 .info{margin-top:20px;background:var(--surface);border-radius:18px;padding:20px 22px;display:grid;gap:10px}
 .info p{margin:0;font-size:1.06rem;line-height:1.62;max-width:68ch}
 .info .fact{color:var(--ink);border-left:3px solid var(--brass);padding-left:14px}
@@ -128,13 +187,17 @@ a{color:var(--brass)}
 .wiki:hover{background:var(--surface-2)}
 .credit{color:var(--muted)}
 .next-row{display:flex;justify-content:flex-end;margin-top:18px}
+.fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
 
 /* ---------- over ---------- */
 .stack{display:grid;gap:22px}
 .big-total{font-family:var(--mono);font-weight:700;font-size:clamp(3.4rem,14vw,6rem);line-height:1;font-variant-numeric:tabular-nums}
 .big-total small{font-size:.3em;color:var(--muted);font-weight:500}
+.squares{font-size:1.6rem;letter-spacing:.12em;margin-top:6px}
+.daily-box{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:baseline}
+.daily-box .flame{font-size:1.1rem}
 .recap{list-style:none;margin:0;padding:0;display:grid;gap:10px;max-width:760px}
-.recap li{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border-radius:14px;padding:8px 14px 8px 8px}
+.recap li{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border-radius:14px;padding:8px 14px 8px 8px;animation:rise .4s cubic-bezier(.2,.9,.25,1) backwards}
 .recap .th{width:64px;height:48px;border-radius:8px;object-fit:cover;background:var(--surface-2)}
 .recap .t{font-weight:600;overflow-wrap:anywhere}
 .recap .y{font-family:var(--mono);font-size:.85rem;color:var(--muted)}
@@ -142,9 +205,23 @@ a{color:var(--brass)}
 .recap .s{font-family:var(--mono);font-weight:700;font-variant-numeric:tabular-nums}
 .copied{min-height:1.3em;color:var(--good);font-size:.9rem;white-space:pre-line}
 
+@media (max-width:640px){
+  .frame{height:36vh;min-height:190px}
+  .pano{height:38vh;min-height:210px}
+  .ask{margin-top:10px}
+  .ask p{font-size:.84rem}
+  .readout .yr,.yr-in{font-size:2.9rem}
+  .dial{gap:4px}
+  .rv .frame{height:auto}
+  .nudges button{min-width:0;flex:1 1 0;padding:10px 4px;font-size:.92rem}
+  .lock-row .btn{width:100%}
+  .mode-tag{display:none}
+}
 @media (prefers-reduced-motion:reduce){
   .truth-line,.span-bar{transition:none}
   .btn{transition:none}
+  .enter,.pop,.recap li,.frame img{animation:none}
+  .loadbar{animation:none;background-size:100% 100%;opacity:.5}
 }
 </style>
 </head>
@@ -154,24 +231,52 @@ a{color:var(--brass)}
   <section id="start" class="start">
     <h1 class="title-xl">Yıl<br><span>Kaç?</span></h1>
     <p class="lede">Bir görsel gelir: bir fotoğraf, bir tablo, bir yapı ya da bir eser. <b>Hiçbir ipucu yok.</b> Cetveli kaydır, hangi yıla ait olduğunu tahmin et. Tam isabet 1000 puan, 5 tur.</p>
-    <div class="row">
-      <button class="btn" id="startBtn">Oyuna başla</button>
-      <span class="stat" id="bestLine"></span>
+    <div class="modes">
+      <div class="card daily">
+        <div class="eyebrow">Günün Oyunu · #<span id="dNo">1</span></div>
+        <h3>Bugün herkes aynı 5 görseli oynuyor</h3>
+        <p id="dState">Her dönemden bir görsel. Günde bir kez oynanır, sonucu arkadaşlarınla kıyasla.</p>
+        <div class="row">
+          <button class="btn" id="dailyBtn">Bugünü oyna</button>
+          <span class="flame" id="streakLine"></span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Serbest oyun</div>
+        <div class="field">
+          <span class="flabel">Kategori</span>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <div class="field">
+          <span class="flabel">Zorluk</span>
+          <div class="seg" id="diffSeg"></div>
+          <p class="fnote" id="diffNote"></p>
+        </div>
+        <label class="toggle" id="aiRow"><input type="checkbox" id="aiToggle"><span>Yapay zeka sahneleri<small id="aiNoteStart">Bazı turlarda Vikipedi'den çizilen panoramik sahneler gelir.</small></span></label>
+        <div class="row">
+          <button class="btn outline" id="startBtn">Serbest oyna</button>
+          <span class="stat" id="bestLine"></span>
+        </div>
+      </div>
     </div>
-    <div class="status" id="status" aria-live="polite"></div>
+    <div>
+      <div class="status" id="status" aria-live="polite"></div>
+      <div class="loadbar" id="loadbar" hidden></div>
+    </div>
   </section>
 
   <section id="guess" hidden>
     <div class="topbar">
-      <div class="brand">Yıl <b>Kaç?</b></div>
+      <div><button class="brand" title="Ana menü">Yıl <b>Kaç?</b></button><span class="mode-tag" id="modeTag"></span></div>
       <div class="row">
+        <div class="dots" id="dots" aria-hidden="true"></div>
         <span class="stat">PUAN <strong id="scoreNow">0</strong></span>
-        <span class="stat">TUR <strong id="roundNo">1</strong>/5</span>
         <button class="icon-btn" id="soundBtn">ses açık</button>
       </div>
     </div>
     <div class="frame" id="frame"><div class="blur" id="blur"></div><img id="photo" alt="Tahmin edilecek görsel"><span class="zoom">büyüt</span></div>
     <div class="pano" id="pano" hidden></div>
+    <div class="timer" id="timer" hidden><i id="timerBar"></i><span id="timerTxt">30</span></div>
     <div class="ask">
       <h2>Bu görsel hangi yıla ait?</h2>
       <p id="askHelp">Olayın yaşandığı ya da eserin, yapının tamamlandığı yıl.</p>
@@ -182,11 +287,16 @@ a{color:var(--brass)}
     </div>
     <p class="hint" id="aiWarn" style="color:var(--truth);margin:6px 2px 0" hidden></p>
     <div class="dial">
-      <div class="readout" aria-live="polite"><span class="era" id="era">MS</span><span class="yr" id="yr">1500</span></div>
+      <div class="readout">
+        <button class="era" id="era" title="MÖ / MS değiştir">MS</button>
+        <button class="yr" id="yr" title="Dokun ve yılı yaz" aria-live="polite">1500</button>
+        <input class="yr-in" id="yrIn" inputmode="numeric" autocomplete="off" maxlength="7" aria-label="Yılı yaz" hidden>
+      </div>
+      <div class="hint dial-hint" id="dialHint">Yıla dokunup yazabilirsin</div>
       <div class="ruler-wrap"><div class="ruler live" id="ruler" tabindex="0" role="slider" aria-label="Yıl tahmini"></div></div>
       <div class="nudges">
-        <button data-d="-10">−10</button><button data-d="-1">−1</button>
-        <button data-d="1">+1</button><button data-d="10">+10</button>
+        <button data-d="-100">−100</button><button data-d="-10">−10</button><button data-d="-1">−1</button>
+        <button data-d="1">+1</button><button data-d="10">+10</button><button data-d="100">+100</button>
       </div>
       <div class="lock-row"><button class="btn" id="lockBtn">Tahmini kilitle</button></div>
     </div>
@@ -194,8 +304,11 @@ a{color:var(--brass)}
 
   <section id="reveal" hidden>
     <div class="topbar">
-      <div class="brand">Yıl <b>Kaç?</b></div>
-      <span class="stat">TUR <strong id="roundNo2">1</strong>/5</span>
+      <div><button class="brand" title="Ana menü">Yıl <b>Kaç?</b></button><span class="mode-tag" id="modeTag2"></span></div>
+      <div class="row">
+        <div class="dots" id="dots2" aria-hidden="true"></div>
+        <span class="stat">PUAN <strong id="scoreNow2">0</strong></span>
+      </div>
     </div>
     <div class="rv">
       <div class="frame" id="frame2"><div class="blur" id="blur2"></div><img id="photo2" alt=""></div>
@@ -207,6 +320,10 @@ a{color:var(--brass)}
       </div>
     </div>
     <div class="ruler-wrap" style="margin-top:20px;padding-top:30px"><div class="ruler" id="ruler2"></div></div>
+    <div class="zoom-wrap">
+      <div class="ruler-wrap"><div class="zr" id="zoomR"></div></div>
+      <div class="legend"><span><i class="lg-g"></i>Tahminin</span><span><i class="lg-t"></i>Doğru yıl</span><span id="bandTxt"><i class="lg-b"></i>500+ puan aralığı</span></div>
+    </div>
     <div class="info">
       <span class="eyebrow">Vikipedi'den</span>
       <p class="fact" id="fact" hidden></p>
@@ -221,26 +338,34 @@ a{color:var(--brass)}
   </section>
 
   <section id="over" class="stack" hidden>
-    <div class="topbar" style="margin-bottom:0"><div class="brand">Yıl <b>Kaç?</b></div></div>
+    <div class="topbar" style="margin-bottom:0"><button class="brand" title="Ana menü">Yıl <b>Kaç?</b></button></div>
     <div>
-      <div class="eyebrow">Toplam puan</div>
+      <div class="eyebrow" id="overEyebrow">Toplam puan</div>
       <div class="big-total" id="bigTotal">0<small> / 5000</small></div>
+      <div class="squares" id="squares"></div>
       <div class="stat" id="overBest" style="margin-top:8px"></div>
+    </div>
+    <div class="daily-box" id="dailyBox" hidden>
+      <span class="flame" id="overStreak"></span>
+      <span class="stat">Sonraki oyun <strong id="countdown">--:--:--</strong> sonra</span>
     </div>
     <ul class="recap" id="recap"></ul>
     <div class="row">
-      <button class="btn" id="againBtn">Tekrar oyna</button>
-      <button class="btn ghost" id="shareBtn">Sonucu kopyala</button>
+      <button class="btn" id="shareBtn">Sonucu kopyala</button>
+      <button class="btn outline" id="againBtn">Tekrar oyna</button>
+      <button class="btn ghost" id="menuBtn">Ana menü</button>
     </div>
     <div class="copied" id="copied" aria-live="polite"></div>
   </section>
 </div>
 
 <div class="lightbox" id="lightbox" hidden><img id="lbImg" alt=""></div>
+<canvas class="fx" id="fx" hidden></canvas>
 
 <script>
 // id, yıl (eksi = MÖ), yaklaşık mı, Türkçe ad, İngilizce Vikipedi sayfası, kısa bilgi
-const EVENTS = [{"id":"istanbul","y":1453,"a":false,"t":"İstanbul'un Fethi","en":"Fall of Constantinople","f":"Fatih şehri aldığında 21 yaşındaydı. Haliç'i kapatan zinciri aşmak için gemileri karadan yürütüp Haliç'e indirmesi kuşatmanın en ünlü hamlesi oldu."},{"id":"ay","y":1969,"a":false,"t":"Ay'a ilk iniş","en":"Apollo 11","f":"Neil Armstrong ve Buzz Aldrin Ay yüzeyinde yaklaşık iki buçuk saat yürüdü. Yayını dünya genelinde yüz milyonlarca kişi canlı izledi."},{"id":"bastille","y":1789,"a":false,"t":"Bastille Baskını","en":"Storming of the Bastille","f":"Fransız Devrimi'nin sembolü olan baskının yıldönümü, 14 Temmuz, bugün Fransa'nın ulusal bayramı. İçeride o gün yalnızca yedi mahkum vardı."},{"id":"kolomb","y":1492,"a":false,"t":"Kolomb Amerika'ya ulaşıyor","en":"Voyages of Christopher Columbus","f":"Kolomb Asya'ya batıdan ulaşmayı hedefliyordu ve ömrü boyunca yeni bir kıtaya vardığını kabul etmedi. Aynı yıl Gırnata'nın düşüşüyle Endülüs'teki son Müslüman devlet de sona erdi."},{"id":"berlin","y":1989,"a":false,"t":"Berlin Duvarı'nın yıkılışı","en":"Fall of the Berlin Wall","f":"Duvar 28 yıl boyunca şehri ikiye böldü. Sınır kapıları, bir yetkilinin basın toplantısındaki yanlış açıklamasından sonra kalabalığın baskısıyla açıldı."},{"id":"berlinkurulus","y":1961,"a":false,"t":"Berlin Duvarı örülüyor","en":"Berlin Wall"},{"id":"titanic","y":1912,"a":false,"t":"Titanic'in batışı","en":"Sinking of the Titanic","f":"Gemi ilk seferinde Southampton'dan New York'a gidiyordu. Filikalar yolcuların yarısını bile taşımaya yetmiyordu ve 1500'den fazla kişi hayatını kaybetti."},{"id":"malazgirt","y":1071,"a":false,"t":"Malazgirt Meydan Muharebesi","en":"Battle of Manzikert","f":"Alparslan, Bizans İmparatoru Romen Diyojen'i esir aldı ama serbest bıraktı. Savaş, Anadolu'nun kapılarını Türklere açan dönüm noktası sayılır."},{"id":"tbmm","y":1920,"a":false,"t":"TBMM'nin açılışı","en":"Grand National Assembly of Turkey","f":"Meclis 23 Nisan'da Ankara'da açıldı. Bu tarih bugün Ulusal Egemenlik ve Çocuk Bayramı olarak kutlanıyor."},{"id":"canakkale","y":1915,"a":false,"t":"Çanakkale Savaşı","en":"Gallipoli campaign","f":"18 Mart'ta boğazı geçmeye çalışan İtilaf donanması, Nusret'in döktüğü mayınlar yüzünden ağır kayıp verdi. Ardından aylarca süren kara savaşları başladı."},{"id":"eyfel","y":1889,"a":false,"t":"Eyfel Kulesi tamamlanıyor","en":"Eiffel Tower","f":"Kule Paris Dünya Fuarı için yapıldı ve 20 yıl sonra sökülmesi planlanıyordu. Telsiz anteni olarak işe yaradığı için yerinde kaldı."},{"id":"bagimsizlik","y":1776,"a":false,"t":"ABD Bağımsızlık Bildirgesi","en":"John Trumbull's Declaration of Independence","f":"Bildirgeyi büyük ölçüde Thomas Jefferson yazdı. Jefferson, bildirgenin tam 50. yıldönümünde, 4 Temmuz'da öldü."},{"id":"cernobil","y":1986,"a":false,"t":"Çernobil faciası","en":"Chernobyl disaster","f":"Patlama bir güvenlik testi sırasında oldu. Yakındaki Pripyat kenti boşaltıldı ve bugün hâlâ terk edilmiş durumda."},{"id":"iphone","y":2007,"a":false,"t":"İlk iPhone","en":"IPhone (1st generation)","f":"Jobs telefonu \"bir iPod, bir telefon ve bir internet cihazı\" diye tanıttı. İlk modelde uygulama mağazası bile yoktu."},{"id":"monalisa","y":1503,"a":false,"t":"Mona Lisa'ya başlanıyor","en":"Mona Lisa","f":"Leonardo tablo üzerinde yıllarca çalıştı ve onu hiç sahibine teslim etmedi. Tablo asıl şöhretini 1911'de Louvre'dan çalınmasıyla kazandı."},{"id":"napolyontac","y":1804,"a":false,"t":"Napolyon'un taç giymesi","en":"The Coronation of Napoleon","f":"Tören için Papa VII. Pius Paris'e getirildi ama Napolyon tacı kendi eliyle başına koydu. Ressam Jacques-Louis David bu anı devasa bir tabloya dönüştürdü."},{"id":"waterloo","y":1815,"a":false,"t":"Waterloo Muharebesi","en":"Battle of Waterloo","f":"Napolyon'un sürgünden dönüp yeniden iktidara geldiği \"Yüz Gün\" bu savaşla bitti. Ardından Atlantik'teki Saint Helena adasına sürgün edildi."},{"id":"moskova","y":1812,"a":false,"t":"Napolyon'un Rusya seferi","en":"French invasion of Russia","f":"Napolyon şehri neredeyse boş ve yanarken buldu. Kış bastırınca geri çekilmek zorunda kaldı ve dev ordusunun büyük kısmını kaybetti."},{"id":"gutenberg","y":1455,"a":true,"t":"Gutenberg İncili","en":"Gutenberg Bible","f":"Hareketli metal harflerle basılan ilk büyük kitaptır. Bugün dünyada tam ya da eksik yaklaşık 49 kopyası kaldı."},{"id":"magna","y":1215,"a":false,"t":"Magna Carta","en":"Magna Carta","f":"Kralın yetkilerini ilk kez yazılı olarak sınırlayan belgedir. Kral John onu imzalamadı, mühürledi, ve birkaç ay sonra Papa belgeyi geçersiz ilan etti."},{"id":"viyana","y":1529,"a":false,"t":"Birinci Viyana Kuşatması","en":"Siege of Vienna (1529)","f":"Osmanlı ordusu şehre ulaştığında mevsim çok ilerlemişti ve ağır toplar yağmur yüzünden geride kalmıştı. Kuşatma birkaç hafta sonra kaldırıldı."},{"id":"viyana2","y":1683,"a":false,"t":"İkinci Viyana Kuşatması","en":"Battle of Vienna"},{"id":"wright","y":1903,"a":false,"t":"Wright Kardeşler'in ilk uçuşu","en":"Wright Flyer","f":"İlk uçuş 12 saniye sürdü ve yaklaşık 37 metre gidildi. Bu, bugünkü bir Boeing 747'nin kanat açıklığından bile kısa."},{"id":"pompeii","y":79,"a":false,"t":"Vezüv'ün Pompeii'yi gömmesi","en":"Eruption of Mount Vesuvius in 79 AD","f":"Kent yaklaşık 1700 yıl boyunca küllerin altında kaldı. Küller o kadar iyi korudu ki duvar yazıları ve fırındaki ekmekler bile bugüne ulaştı."},{"id":"sezar","y":-44,"a":false,"t":"Jül Sezar'ın öldürülmesi","en":"Assassination of Julius Caesar","f":"Suikast 15 Mart'ta oldu ve suikastçıların arasında yakın dostu Brutus da vardı. Sezar'ın ölümü Roma Cumhuriyeti'nin sonunu hızlandırdı."},{"id":"ayasofya","y":537,"a":false,"t":"Ayasofya'nın açılışı","en":"Hagia Sophia","f":"İmparator I. Justinianus onu yaklaşık beş yılda inşa ettirdi. Yaklaşık bin yıl boyunca dünyanın en büyük katedrali olarak kaldı."},{"id":"suveys","y":1869,"a":false,"t":"Süveyş Kanalı'nın açılışı","en":"Suez Canal","f":"Kanal, Avrupa ile Asya arasındaki deniz yolunu Afrika'yı dolaşmaya gerek bırakmadan binlerce kilometre kısalttı. İnşaatı Fransız Ferdinand de Lesseps'in şirketi on yılda bitirdi."},{"id":"panama","y":1914,"a":false,"t":"Panama Kanalı'nın açılışı","en":"Panama Canal","f":"İlk deneyen Fransızlar sıtma ve sarı humma yüzünden binlerce işçi kaybedip vazgeçti. İşi ABD tamamladı ve kanal ancak 1999'da Panama'ya devredildi."},{"id":"olimpiyat","y":1896,"a":false,"t":"İlk modern Olimpiyatlar","en":"Spyridon Louis","f":"Oyunlara 14 ülkeden yaklaşık 240 sporcu katıldı ve hepsi erkekti. Kazananlara altın değil gümüş madalya verildi."},{"id":"harf","y":1928,"a":false,"t":"Harf Devrimi","en":"Turkish alphabet reform","f":"Yeni alfabeyi halka öğretmek için Millet Mektepleri açıldı. Atatürk yeni harfleri bizzat kara tahta başında tanıttı."},{"id":"everest","y":1953,"a":false,"t":"Everest'e ilk tırmanış","en":"1953 British Mount Everest expedition","f":"Zirveye Yeni Zelandalı Edmund Hillary ile Şerpa Tenzing Norgay birlikte ulaştı. Haber, II. Elizabeth'in taç giyme töreninin sabahı duyuruldu."},{"id":"sputnik","y":1957,"a":false,"t":"Sputnik 1 fırlatılıyor","en":"Sputnik 1","f":"Sputnik bir plaj topu büyüklüğündeydi ve yalnızca bip sesleri gönderiyordu. ABD'de büyük bir şaşkınlık yarattı ve uzay yarışını başlattı."},{"id":"yildizligece","y":1889,"a":false,"t":"Van Gogh, Yıldızlı Gece","en":"The Starry Night","f":"Van Gogh tabloyu kaldığı hastanedeki odasının penceresinden gördüğü manzaradan yola çıkarak yaptı. Hayatı boyunca neredeyse hiç tablo satamadı."},{"id":"guernica","y":1937,"a":false,"t":"Picasso, Guernica","en":"Guernica (Picasso)","f":"Tablo, İspanya İç Savaşı'nda Bask kasabası Guernica'nın bombalanmasına tepki olarak yapıldı. Picasso, İspanya'ya demokrasi gelene kadar tablonun oraya gitmesini istemedi ve tablo 1981'de döndü."},{"id":"tutankamon","y":1922,"a":false,"t":"Tutankamon'un mezarının bulunuşu","en":"Discovery of the tomb of Tutankhamun","f":"Arkeolog Howard Carter mezarı neredeyse el değmemiş hâlde buldu. İçinden çıkan altın maske, dünyanın en ünlü arkeolojik eserlerinden biri oldu."},{"id":"dumlupinar","y":1922,"a":false,"t":"Büyük Taarruz","en":"Battle of Dumlupınar","f":"26 Ağustos'ta başlayan taarruz, 30 Ağustos'taki Başkomutanlık Meydan Muharebesi ile zafere ulaştı. Bu tarih bugün Zafer Bayramı olarak kutlanıyor."},{"id":"perseverance","y":2021,"a":false,"t":"Perseverance Mars'a iniyor","en":"Perseverance (rover)","f":"Araç yanında küçük bir helikopter de götürdü. Ingenuity adlı bu helikopter, başka bir gezegende uçan ilk motorlu araç oldu."},{"id":"modelt","y":1908,"a":false,"t":"Ford Model T","en":"Ford Model T","f":"Model T, hareketli montaj hattı sayesinde ucuzladı ve orta sınıfın arabası oldu. Henry Ford'un \"Rengi siyah olduğu sürece her renk olur\" dediği anlatılır."},{"id":"sistina","y":1512,"a":false,"t":"Sistina Şapeli tavanı","en":"Sistine Chapel ceiling","f":"Michelangelo kendini ressam değil heykeltıraş olarak görüyordu ve işi isteksizce kabul etti. Tavanı dört yılda, iskele üstünde ayakta çalışarak boyadı."},{"id":"misir","y":1798,"a":false,"t":"Napolyon'un Mısır seferi","en":"French invasion of Egypt and Syria","f":"Sefere orduyla birlikte 150'den fazla bilim insanı ve sanatçı katıldı. Ünlü Rosetta Taşı bu sefer sırasında bulundu."},{"id":"piramit","y":-2560,"a":true,"t":"Keops Piramidi","en":"Great Pyramid of Giza","f":"Yaklaşık 3800 yıl boyunca dünyanın en yüksek insan yapımı yapısı olarak kaldı. Kleopatra yaşarken bile piramit 2500 yaşındaydı."},{"id":"bagdat","y":1258,"a":false,"t":"Moğolların Bağdat'ı yağmalaması","en":"Siege of Baghdad (1258)","f":"Hülagü Han komutasındaki Moğollar Abbasi Halifeliği'ne son verdi. Beytülhikme'deki kitapların Dicle'ye atıldığı ve nehrin mürekkepten karardığı anlatılır."},{"id":"veba","y":1347,"a":false,"t":"Kara Veba","en":"Black Death","f":"Salgın ticaret gemileriyle Akdeniz limanlarına geldi. Birkaç yıl içinde Avrupa nüfusunun üçte biri ile yarısı arasında bir kısmı hayatını kaybetti."},{"id":"tacmahal","y":1643,"a":true,"t":"Tac Mahal tamamlanıyor","en":"Taj Mahal"},{"id":"gaugamela","y":-331,"a":false,"t":"Gaugamela Muharebesi","en":"Battle of Gaugamela","f":"İskender sayıca çok daha büyük Pers ordusunu yendi ve Pers İmparatorluğu'nun sonunu getirdi. O sırada 25 yaşındaydı."},{"id":"kudus","y":1099,"a":false,"t":"Haçlıların Kudüs'ü alması","en":"Siege of Jerusalem (1099)","f":"Birinci Haçlı Seferi'nin sonunda kent alındı ve Kudüs Krallığı kuruldu. Kenti 1187'de Selahaddin Eyyubi geri aldı."},{"id":"selimiye","y":1575,"a":false,"t":"Selimiye Camii","en":"Selimiye Mosque","f":"Sinan bu eseri \"ustalık eserim\" diye tanımlar. Camiyi bitirdiğinde 80 yaşını geçmişti."},{"id":"piri","y":1513,"a":false,"t":"Piri Reis Haritası","en":"Piri Reis map","f":"Harita, Amerika kıtasını gösteren günümüze ulaşmış en eski haritalardan biri. 1929'da Topkapı Sarayı'nda yeniden bulundu."},{"id":"mayflower","y":1620,"a":false,"t":"Mayflower","en":"Mayflower","f":"Gemi yaklaşık 100 yolcuyu İngiltere'den Kuzey Amerika'ya taşıdı. Yolculuk iki aydan uzun sürdü ve yolcuların yarısı ilk kışı göremedi."},{"id":"mohac","y":1526,"a":false,"t":"Mohaç Meydan Muharebesi","en":"Battle of Mohács","f":"Savaş yaklaşık iki saat sürdü. Macar Kralı II. Layoş kaçarken bir derede boğuldu."},{"id":"preveze","y":1538,"a":false,"t":"Preveze Deniz Muharebesi","en":"Battle of Preveza","f":"Bu zafer Akdeniz'de uzun süre Osmanlı üstünlüğünü sağladı. 27 Eylül bugün Türk Deniz Kuvvetleri Günü olarak kutlanıyor."},{"id":"inebahti","y":1571,"a":false,"t":"İnebahtı Deniz Muharebesi","en":"Battle of Lepanto"},{"id":"hastings","y":1066,"a":false,"t":"Hastings Muharebesi","en":"Battle of Hastings"},{"id":"agincourt","y":1415,"a":false,"t":"Agincourt Muharebesi","en":"Battle of Agincourt"},{"id":"armada","y":1588,"a":false,"t":"İspanyol Armadası","en":"Spanish Armada"},{"id":"londra","y":1666,"a":false,"t":"Büyük Londra Yangını","en":"Great Fire of London"},{"id":"bostoncay","y":1773,"a":false,"t":"Boston Çay Partisi","en":"Boston Tea Party"},{"id":"balon","y":1783,"a":false,"t":"İlk insanlı balon uçuşu","en":"Montgolfier brothers"},{"id":"trafalgar","y":1805,"a":false,"t":"Trafalgar Muharebesi","en":"Battle of Trafalgar"},{"id":"ozgurluk","y":1830,"a":false,"t":"Delacroix, Halka Yol Gösteren Özgürlük","en":"Liberty Leading the People"},{"id":"medusa","y":1819,"a":false,"t":"Géricault, Medusa'nın Salı","en":"The Raft of the Medusa"},{"id":"gezgin","y":1818,"a":true,"t":"Friedrich, Sis Denizi Üzerindeki Gezgin","en":"Wanderer above the Sea of Fog"},{"id":"roket","y":1829,"a":false,"t":"Stephenson'ın Rocket lokomotifi","en":"Stephenson's Rocket"},{"id":"ilkfoto","y":1827,"a":true,"t":"Bilinen ilk fotoğraf","en":"View from the Window at Le Gras"},{"id":"fuar","y":1851,"a":false,"t":"Büyük Londra Sergisi","en":"The Great Exhibition"},{"id":"balaklava","y":1854,"a":false,"t":"Hafif Süvari Tugayı'nın hücumu","en":"Charge of the Light Brigade"},{"id":"gettysburg","y":1863,"a":false,"t":"Gettysburg Muharebesi","en":"Battle of Gettysburg"},{"id":"altinvivi","y":1869,"a":false,"t":"Kıtalararası demiryolunun tamamlanması","en":"First transcontinental railroad"},{"id":"almanimp","y":1871,"a":false,"t":"Alman İmparatorluğu'nun ilanı","en":"Proclamation of the German Empire"},{"id":"izlenim","y":1872,"a":false,"t":"Monet, İzlenim: Gün Doğumu","en":"Impression, Sunrise"},{"id":"telefon","y":1876,"a":false,"t":"Telefonun icadı","en":"Invention of the telephone","f":"Bell patent başvurusunu, rakibi Elisha Gray ile aynı gün yaptı. Telefondaki ilk cümlesi asistanına \"Bay Watson, buraya gelin, sizi görmek istiyorum\" oldu."},{"id":"fonograf","y":1877,"a":false,"t":"Edison'un fonografı","en":"Phonograph"},{"id":"krakatoa","y":1883,"a":false,"t":"Krakatoa patlaması","en":"1883 eruption of Krakatoa"},{"id":"brooklyn","y":1883,"a":false,"t":"Brooklyn Köprüsü açılıyor","en":"Brooklyn Bridge"},{"id":"benz","y":1886,"a":false,"t":"Benz'in ilk otomobili","en":"Benz Patent-Motorwagen"},{"id":"ertugrul","y":1890,"a":false,"t":"Ertuğrul Fırkateyni faciası","en":"Ottoman frigate Ertuğrul"},{"id":"ciglik","y":1893,"a":false,"t":"Munch, Çığlık","en":"The Scream"},{"id":"towerbridge","y":1894,"a":false,"t":"Tower Bridge açılıyor","en":"Tower Bridge"},{"id":"xray","y":1895,"a":false,"t":"İlk röntgen görüntüsü","en":"Hand mit Ringen"},{"id":"sinema","y":1895,"a":false,"t":"Lumière Kardeşler'in ilk gösterimi","en":"Workers Leaving the Lumière Factory","f":"Gösterim Paris'te bir kafenin bodrumunda yapıldı ve on kısa filmden oluşuyordu. Trenin istasyona girişini gösteren filmlerinde seyircilerin paniğe kapıldığı anlatılır ama bu büyük ihtimalle bir efsane."},{"id":"flatiron","y":1902,"a":false,"t":"Flatiron Binası","en":"Flatiron Building"},{"id":"sanfrancisco","y":1906,"a":false,"t":"San Francisco depremi","en":"1906 San Francisco earthquake"},{"id":"kaplumbaga","y":1906,"a":false,"t":"Osman Hamdi Bey, Kaplumbağa Terbiyecisi","en":"The Tortoise Trainer"},{"id":"opucuk","y":1908,"a":false,"t":"Klimt, Öpücük","en":"The Kiss (Klimt)"},{"id":"hicaz","y":1908,"a":false,"t":"Hicaz Demiryolu","en":"Hejaz railway"},{"id":"avignon","y":1907,"a":false,"t":"Picasso, Avignonlu Kızlar","en":"Les Demoiselles d'Avignon"},{"id":"amundsen","y":1911,"a":false,"t":"Güney Kutbu'na ilk ulaşılması","en":"Amundsen's South Pole expedition","f":"Norveçli Roald Amundsen'in ekibi, İngiliz Robert Scott'un ekibini yaklaşık beş hafta farkla geçti. Scott ve ekibi dönüş yolunda hayatını kaybetti."},{"id":"saraybosna","y":1914,"a":false,"t":"Saraybosna suikastı","en":"Assassination of Archduke Franz Ferdinand"},{"id":"cesme","y":1917,"a":false,"t":"Duchamp, Çeşme","en":"Fountain (Duchamp)"},{"id":"kislasaray","y":1917,"a":false,"t":"Ekim Devrimi","en":"October Revolution"},{"id":"lindbergh","y":1927,"a":false,"t":"Lindbergh'in Atlantik uçuşu","en":"Spirit of St. Louis"},{"id":"borsa","y":1929,"a":false,"t":"1929 Borsa Çöküşü","en":"Wall Street crash of 1929"},{"id":"amerikangotik","y":1930,"a":false,"t":"Wood, Amerikan Gotiği","en":"American Gothic"},{"id":"tuzyuruyusu","y":1930,"a":false,"t":"Gandi'nin Tuz Yürüyüşü","en":"Salt March"},{"id":"kurtarici","y":1931,"a":false,"t":"Kurtarıcı İsa heykeli","en":"Christ the Redeemer (statue)"},{"id":"empire","y":1931,"a":false,"t":"Empire State Binası","en":"Empire State Building"},{"id":"bellek","y":1931,"a":false,"t":"Dalí, Belleğin Azmi","en":"The Persistence of Memory"},{"id":"gokdelenogle","y":1932,"a":false,"t":"Gökdelen Üstünde Öğle Yemeği","en":"Lunch atop a Skyscraper"},{"id":"hoover","y":1936,"a":false,"t":"Hoover Barajı","en":"Hoover Dam"},{"id":"gocmenanne","y":1936,"a":false,"t":"Göçmen Anne fotoğrafı","en":"Migrant Mother"},{"id":"hindenburg","y":1937,"a":false,"t":"Hindenburg faciası","en":"Hindenburg disaster"},{"id":"goldengate","y":1937,"a":false,"t":"Golden Gate Köprüsü","en":"Golden Gate Bridge"},{"id":"rushmore","y":1941,"a":false,"t":"Rushmore Dağı","en":"Mount Rushmore"},{"id":"geceyarisi","y":1942,"a":false,"t":"Hopper, Gece Kuşları","en":"Nighthawks"},{"id":"dday","y":1944,"a":false,"t":"Normandiya Çıkarması","en":"Normandy landings"},{"id":"iwojima","y":1945,"a":false,"t":"Iwo Jima'da bayrak dikilmesi","en":"Raising the Flag on Iwo Jima"},{"id":"eniac","y":1946,"a":false,"t":"ENIAC bilgisayarı","en":"ENIAC"},{"id":"anitkabir","y":1953,"a":false,"t":"Anıtkabir tamamlanıyor","en":"Anıtkabir"},{"id":"photo51","y":1952,"a":false,"t":"DNA'nın \"Fotoğraf 51\"i","en":"Photo 51"},{"id":"atomium","y":1958,"a":false,"t":"Atomium","en":"Atomium"},{"id":"gagarin","y":1961,"a":false,"t":"Gagarin uzaya çıkıyor","en":"Vostok 1"},{"id":"spaceneedle","y":1962,"a":false,"t":"Space Needle","en":"Space Needle"},{"id":"corba","y":1962,"a":false,"t":"Warhol, Campbell Çorba Kutuları","en":"Campbell's Soup Cans"},{"id":"washington","y":1963,"a":false,"t":"Washington Yürüyüşü","en":"March on Washington for Jobs and Freedom"},{"id":"earthrise","y":1968,"a":false,"t":"Dünya'nın doğuşu fotoğrafı","en":"Earthrise"},{"id":"concorde","y":1969,"a":false,"t":"Concorde'un ilk uçuşu","en":"Concorde"},{"id":"woodstock","y":1969,"a":false,"t":"Woodstock Festivali","en":"Woodstock"},{"id":"mavimermer","y":1972,"a":false,"t":"Mavi Bilye fotoğrafı","en":"The Blue Marble"},{"id":"sidney","y":1973,"a":false,"t":"Sidney Opera Binası","en":"Sydney Opera House"},{"id":"bogazkoprusu","y":1973,"a":false,"t":"Boğaziçi Köprüsü açılıyor","en":"Bosphorus Bridge"},{"id":"saygon","y":1975,"a":false,"t":"Saygon'un düşüşü","en":"Fall of Saigon"},{"id":"cntower","y":1976,"a":false,"t":"CN Kulesi","en":"CN Tower"},{"id":"voyager","y":1977,"a":false,"t":"Voyager 1 fırlatılıyor","en":"Voyager 1"},{"id":"walkman","y":1979,"a":false,"t":"Sony Walkman","en":"Walkman"},{"id":"sthelens","y":1980,"a":false,"t":"St. Helens yanardağının patlaması","en":"1980 eruption of Mount St. Helens"},{"id":"mekik","y":1981,"a":false,"t":"İlk uzay mekiği uçuşu","en":"STS-1"},{"id":"macintosh","y":1984,"a":false,"t":"İlk Macintosh","en":"Macintosh 128K"},{"id":"gameboy","y":1989,"a":false,"t":"Game Boy","en":"Game Boy"},{"id":"louvre","y":1989,"a":false,"t":"Louvre Piramidi","en":"Louvre Pyramid"},{"id":"hubble","y":1990,"a":false,"t":"Hubble Uzay Teleskobu fırlatılıyor","en":"Hubble Space Telescope"},{"id":"solukmavi","y":1990,"a":false,"t":"Soluk Mavi Nokta fotoğrafı","en":"Pale Blue Dot"},{"id":"www","y":1991,"a":false,"t":"İlk web sitesi","en":"World Wide Web","f":"Web'i CERN'de çalışan Tim Berners-Lee icat etti. İlk web sitesi web'in ne olduğunu anlatan sade bir sayfaydı ve bugün hâlâ açılabiliyor."},{"id":"yaratilis","y":1995,"a":false,"t":"Yaratılış Sütunları fotoğrafı","en":"Pillars of Creation"},{"id":"dolly","y":1996,"a":false,"t":"Klonlanan koyun Dolly","en":"Dolly (sheep)"},{"id":"guggenheim","y":1997,"a":false,"t":"Guggenheim Bilbao Müzesi","en":"Guggenheim Museum Bilbao"},{"id":"petronas","y":1998,"a":false,"t":"Petronas İkiz Kuleleri","en":"Petronas Towers"},{"id":"burjalarab","y":1999,"a":false,"t":"Burj Al Arab","en":"Burj Al Arab"},{"id":"euro","y":2002,"a":false,"t":"Euro banknot ve madeni paraları","en":"Euro coins"},{"id":"taipei","y":2004,"a":false,"t":"Taipei 101","en":"Taipei 101"},{"id":"burj","y":2010,"a":false,"t":"Burj Khalifa açılıyor","en":"Burj Khalifa"},{"id":"higgs","y":2012,"a":false,"t":"Higgs bozonunun keşfi","en":"Higgs boson"},{"id":"shard","y":2012,"a":false,"t":"The Shard","en":"The Shard"},{"id":"philae","y":2014,"a":false,"t":"Philae kuyruklu yıldıza iniyor","en":"Philae (spacecraft)"},{"id":"pluton","y":2015,"a":false,"t":"New Horizons'un Plüton fotoğrafı","en":"Pluto"},{"id":"webb","y":2022,"a":false,"t":"James Webb'in ilk derin alan görüntüsü","en":"Webb's First Deep Field"},{"id":"stonehenge","y":-2500,"a":true,"t":"Stonehenge","en":"Stonehenge"},{"id":"parthenon","y":-432,"a":false,"t":"Parthenon tamamlanıyor","en":"Parthenon"},{"id":"kolezyum","y":80,"a":false,"t":"Kolezyum açılıyor","en":"Colosseum"},{"id":"pantheon","y":126,"a":true,"t":"Roma'daki Pantheon","en":"Pantheon, Rome"},{"id":"terakota","y":-210,"a":true,"t":"Terakota Ordusu","en":"Terracotta Army"},{"id":"rosetta","y":-196,"a":false,"t":"Rosetta Taşı","en":"Rosetta Stone"},{"id":"hammurabi","y":-1754,"a":true,"t":"Hammurabi Kanunları","en":"Code of Hammurabi"},{"id":"nefertiti","y":-1345,"a":true,"t":"Nefertiti büstü","en":"Nefertiti Bust"},{"id":"maske","y":-1323,"a":true,"t":"Tutankamon'un maskesi","en":"Mask of Tutankhamun"},{"id":"antikythera","y":-100,"a":true,"t":"Antikythera düzeneği","en":"Antikythera mechanism"},{"id":"istar","y":-575,"a":true,"t":"İştar Kapısı","en":"Ishtar Gate"},{"id":"iskendermozaik","y":-100,"a":true,"t":"İskender Mozaiği","en":"Alexander Mosaic"},{"id":"celsus","y":117,"a":true,"t":"Celsus Kütüphanesi","en":"Library of Celsus"},{"id":"machupicchu","y":1450,"a":true,"t":"Machu Picchu","en":"Machu Picchu"},{"id":"angkor","y":1150,"a":true,"t":"Angkor Wat","en":"Angkor Wat"},{"id":"yasaksehir","y":1420,"a":false,"t":"Yasak Şehir","en":"Forbidden City"},{"id":"vasilikatedral","y":1561,"a":false,"t":"Aziz Vasil Katedrali","en":"Saint Basil's Cathedral"},{"id":"topkapi","y":1478,"a":false,"t":"Topkapı Sarayı","en":"Topkapı Palace"},{"id":"suleymaniye","y":1557,"a":false,"t":"Süleymaniye Camii","en":"Süleymaniye Mosque"},{"id":"sultanahmet","y":1616,"a":false,"t":"Sultanahmet Camii","en":"Blue Mosque, Istanbul"},{"id":"dolmabahce","y":1856,"a":false,"t":"Dolmabahçe Sarayı","en":"Dolmabahçe Palace"},{"id":"bigben","y":1859,"a":false,"t":"Big Ben","en":"Big Ben"},{"id":"pisa","y":1372,"a":false,"t":"Pisa Kulesi tamamlanıyor","en":"Leaning Tower of Pisa"},{"id":"venus","y":1485,"a":true,"t":"Botticelli, Venüs'ün Doğuşu","en":"The Birth of Venus"},{"id":"sonakşam","y":1498,"a":false,"t":"Leonardo, Son Akşam Yemeği","en":"The Last Supper (Leonardo)"},{"id":"adem","y":1512,"a":true,"t":"Michelangelo, Adem'in Yaratılışı","en":"The Creation of Adam"},{"id":"atina","y":1511,"a":true,"t":"Raffaello, Atina Okulu","en":"The School of Athens"},{"id":"davut","y":1504,"a":false,"t":"Michelangelo'nun Davut heykeli","en":"David (Michelangelo)"},{"id":"arnolfini","y":1434,"a":false,"t":"Van Eyck, Arnolfini Portresi","en":"Arnolfini Portrait"},{"id":"haz","y":1500,"a":true,"t":"Bosch, Dünyevi Zevkler Bahçesi","en":"The Garden of Earthly Delights"},{"id":"nedimeler","y":1656,"a":false,"t":"Velázquez, Nedimeler","en":"Las Meninas"},{"id":"gecedevriyesi","y":1642,"a":false,"t":"Rembrandt, Gece Devriyesi","en":"The Night Watch"},{"id":"incikupe","y":1665,"a":true,"t":"Vermeer, İnci Küpeli Kız","en":"Girl with a Pearl Earring"},{"id":"dalga","y":1831,"a":true,"t":"Hokusai, Kanagawa'da Büyük Dalga","en":"The Great Wave off Kanagawa"},{"id":"samanarabasi","y":1821,"a":false,"t":"Constable, Saman Arabası","en":"The Hay Wain"},{"id":"aycicekleri","y":1888,"a":false,"t":"Van Gogh, Ayçiçekleri","en":"Sunflowers (Van Gogh series)"},{"id":"penisilin","y":1928,"a":false,"t":"Penisilinin keşfi","en":"History of penicillin","f":"Fleming tatilden döndüğünde kirlenmiş bir petri kabında küfün bakterileri öldürdüğünü fark etti. Penisilinin ilaç olarak yaygınlaşması ise II. Dünya Savaşı'nı buldu."},{"id":"lhc","y":2008,"a":false,"t":"Büyük Hadron Çarpıştırıcısı","en":"Large Hadron Collider"},{"id":"gaudi","y":1910,"a":false,"t":"Gaudí, Casa Milà","en":"Casa Milà"},{"id":"bauhaus","y":1926,"a":false,"t":"Dessau'daki Bauhaus binası","en":"Bauhaus Dessau"},{"id":"chrysler","y":1930,"a":false,"t":"Chrysler Binası","en":"Chrysler Building"},{"id":"konstantin","y":315,"a":false,"t":"Konstantin Takı","en":"Arch of Constantine"},{"id":"trajan","y":113,"a":false,"t":"Traianus Sütunu","en":"Trajan's Column"},{"id":"galata","y":1348,"a":false,"t":"Galata Kulesi","en":"Galata Tower"}];
+// p: sayfanın kendi görseli uygun değilse kullanılacak Wikimedia Commons dosya adı
+const EVENTS = [{"id":"istanbul","y":1453,"a":false,"t":"İstanbul'un Fethi","en":"Fall of Constantinople","f":"Fatih şehri aldığında 21 yaşındaydı. Haliç'i kapatan zinciri aşmak için gemileri karadan yürütüp Haliç'e indirmesi kuşatmanın en ünlü hamlesi oldu."},{"id":"ay","y":1969,"a":false,"t":"Ay'a ilk iniş","en":"Apollo 11","f":"Neil Armstrong ve Buzz Aldrin Ay yüzeyinde yaklaşık iki buçuk saat yürüdü. Yayını dünya genelinde yüz milyonlarca kişi canlı izledi."},{"id":"bastille","y":1789,"a":false,"t":"Bastille Baskını","en":"Storming of the Bastille","f":"Fransız Devrimi'nin sembolü olan baskının yıldönümü, 14 Temmuz, bugün Fransa'nın ulusal bayramı. İçeride o gün yalnızca yedi mahkum vardı."},{"id":"kolomb","y":1492,"a":false,"t":"Kolomb Amerika'ya ulaşıyor","en":"Voyages of Christopher Columbus","f":"Kolomb Asya'ya batıdan ulaşmayı hedefliyordu ve ömrü boyunca yeni bir kıtaya vardığını kabul etmedi. Aynı yıl Gırnata'nın düşüşüyle Endülüs'teki son Müslüman devlet de sona erdi.","p":"Landing of Columbus (2) (cropped).jpg"},{"id":"berlin","y":1989,"a":false,"t":"Berlin Duvarı'nın yıkılışı","en":"Fall of the Berlin Wall","f":"Duvar 28 yıl boyunca şehri ikiye böldü. Sınır kapıları, bir yetkilinin basın toplantısındaki yanlış açıklamasından sonra kalabalığın baskısıyla açıldı."},{"id":"berlinkurulus","y":1961,"a":false,"t":"Berlin Duvarı örülüyor","en":"Berlin Wall"},{"id":"titanic","y":1912,"a":false,"t":"Titanic'in batışı","en":"Sinking of the Titanic","f":"Gemi ilk seferinde Southampton'dan New York'a gidiyordu. Filikalar yolcuların yarısını bile taşımaya yetmiyordu ve 1500'den fazla kişi hayatını kaybetti."},{"id":"malazgirt","y":1071,"a":false,"t":"Malazgirt Meydan Muharebesi","en":"Battle of Manzikert","f":"Alparslan, Bizans İmparatoru Romen Diyojen'i esir aldı ama serbest bıraktı. Savaş, Anadolu'nun kapılarını Türklere açan dönüm noktası sayılır."},{"id":"tbmm","y":1920,"a":false,"t":"TBMM'nin açılışı","en":"Grand National Assembly of Turkey","f":"Meclis 23 Nisan'da Ankara'da açıldı. Bu tarih bugün Ulusal Egemenlik ve Çocuk Bayramı olarak kutlanıyor.","p":"Mustafa Kemal Pasha in the Turkish Grand National Assembly, 1 March 1921.jpg"},{"id":"canakkale","y":1915,"a":false,"t":"Çanakkale Savaşı","en":"Gallipoli campaign","f":"18 Mart'ta boğazı geçmeye çalışan İtilaf donanması, Nusret'in döktüğü mayınlar yüzünden ağır kayıp verdi. Ardından aylarca süren kara savaşları başladı.","p":"Landing of Australian troops at ANZAC Cove, 25 April 1915 slnsw.jpg"},{"id":"eyfel","y":1889,"a":false,"t":"Eyfel Kulesi tamamlanıyor","en":"Eiffel Tower","f":"Kule Paris Dünya Fuarı için yapıldı ve 20 yıl sonra sökülmesi planlanıyordu. Telsiz anteni olarak işe yaradığı için yerinde kaldı."},{"id":"bagimsizlik","y":1776,"a":false,"t":"ABD Bağımsızlık Bildirgesi","en":"Declaration of Independence (painting)","f":"Bildirgeyi büyük ölçüde Thomas Jefferson yazdı. Jefferson, bildirgenin tam 50. yıldönümünde, 4 Temmuz'da öldü.","p":"Declaration of Independence (1819), by John Trumbull.jpg"},{"id":"cernobil","y":1986,"a":false,"t":"Çernobil faciası","en":"Chernobyl disaster","f":"Patlama bir güvenlik testi sırasında oldu. Yakındaki Pripyat kenti boşaltıldı ve bugün hâlâ terk edilmiş durumda."},{"id":"iphone","y":2007,"a":false,"t":"İlk iPhone","en":"IPhone (1st generation)","f":"Jobs telefonu \"bir iPod, bir telefon ve bir internet cihazı\" diye tanıttı. İlk modelde uygulama mağazası bile yoktu.","p":"IPhone First Generation 8GB (3677961514).jpg"},{"id":"monalisa","y":1503,"a":false,"t":"Mona Lisa'ya başlanıyor","en":"Mona Lisa","f":"Leonardo tablo üzerinde yıllarca çalıştı ve onu hiç sahibine teslim etmedi. Tablo asıl şöhretini 1911'de Louvre'dan çalınmasıyla kazandı."},{"id":"napolyontac","y":1804,"a":false,"t":"Napolyon'un taç giymesi","en":"The Coronation of Napoleon","f":"Tören için Papa VII. Pius Paris'e getirildi ama Napolyon tacı kendi eliyle başına koydu. Ressam Jacques-Louis David bu anı devasa bir tabloya dönüştürdü."},{"id":"waterloo","y":1815,"a":false,"t":"Waterloo Muharebesi","en":"Battle of Waterloo","f":"Napolyon'un sürgünden dönüp yeniden iktidara geldiği \"Yüz Gün\" bu savaşla bitti. Ardından Atlantik'teki Saint Helena adasına sürgün edildi."},{"id":"moskova","y":1812,"a":false,"t":"Napolyon'un Rusya seferi","en":"French invasion of Russia","f":"Napolyon şehri neredeyse boş ve yanarken buldu. Kış bastırınca geri çekilmek zorunda kaldı ve dev ordusunun büyük kısmını kaybetti."},{"id":"gutenberg","y":1455,"a":true,"t":"Gutenberg İncili","en":"Gutenberg Bible","f":"Hareketli metal harflerle basılan ilk büyük kitaptır. Bugün dünyada tam ya da eksik yaklaşık 49 kopyası kaldı."},{"id":"magna","y":1215,"a":false,"t":"Magna Carta","en":"Magna Carta","f":"Kralın yetkilerini ilk kez yazılı olarak sınırlayan belgedir. Kral John onu imzalamadı, mühürledi, ve birkaç ay sonra Papa belgeyi geçersiz ilan etti."},{"id":"viyana","y":1529,"a":false,"t":"Birinci Viyana Kuşatması","en":"Siege of Vienna (1529)","f":"Osmanlı ordusu şehre ulaştığında mevsim çok ilerlemişti ve ağır toplar yağmur yüzünden geride kalmıştı. Kuşatma birkaç hafta sonra kaldırıldı."},{"id":"viyana2","y":1683,"a":false,"t":"İkinci Viyana Kuşatması","en":"Battle of Vienna"},{"id":"wright","y":1903,"a":false,"t":"Wright Kardeşler'in ilk uçuşu","en":"Wright Flyer","f":"İlk uçuş 12 saniye sürdü ve yaklaşık 37 metre gidildi. Bu, bugünkü bir Boeing 747'nin kanat açıklığından bile kısa."},{"id":"pompeii","y":79,"a":false,"t":"Vezüv'ün Pompeii'yi gömmesi","en":"Eruption of Mount Vesuvius in 79 AD","f":"Kent yaklaşık 1700 yıl boyunca küllerin altında kaldı. Küller o kadar iyi korudu ki duvar yazıları ve fırındaki ekmekler bile bugüne ulaştı."},{"id":"sezar","y":-44,"a":false,"t":"Jül Sezar'ın öldürülmesi","en":"Assassination of Julius Caesar","f":"Suikast 15 Mart'ta oldu ve suikastçıların arasında yakın dostu Brutus da vardı. Sezar'ın ölümü Roma Cumhuriyeti'nin sonunu hızlandırdı."},{"id":"ayasofya","y":537,"a":false,"t":"Ayasofya'nın açılışı","en":"Hagia Sophia","f":"İmparator I. Justinianus onu yaklaşık beş yılda inşa ettirdi. Yaklaşık bin yıl boyunca dünyanın en büyük katedrali olarak kaldı."},{"id":"suveys","y":1869,"a":false,"t":"Süveyş Kanalı'nın açılışı","en":"Suez Canal","f":"Kanal, Avrupa ile Asya arasındaki deniz yolunu Afrika'yı dolaşmaya gerek bırakmadan binlerce kilometre kısalttı. İnşaatı Fransız Ferdinand de Lesseps'in şirketi on yılda bitirdi."},{"id":"panama","y":1914,"a":false,"t":"Panama Kanalı'nın açılışı","en":"Panama Canal","f":"İlk deneyen Fransızlar sıtma ve sarı humma yüzünden binlerce işçi kaybedip vazgeçti. İşi ABD tamamladı ve kanal ancak 1999'da Panama'ya devredildi.","p":"SS Ancon (1902 ship) NARA 185-G-0882 cropped.jpg"},{"id":"olimpiyat","y":1896,"a":false,"t":"İlk modern Olimpiyatlar","en":"Spyridon Louis","f":"Oyunlara 14 ülkeden yaklaşık 240 sporcu katıldı ve hepsi erkekti. Kazananlara altın değil gümüş madalya verildi."},{"id":"harf","y":1928,"a":false,"t":"Harf Devrimi","en":"Turkish alphabet reform","f":"Yeni alfabeyi halka öğretmek için Millet Mektepleri açıldı. Atatürk yeni harfleri bizzat kara tahta başında tanıttı.","p":"Ataturk-September 20, 1928.jpg"},{"id":"everest","y":1953,"a":false,"t":"Everest'e ilk tırmanış","en":"1953 British Mount Everest expedition","f":"Zirveye Yeni Zelandalı Edmund Hillary ile Şerpa Tenzing Norgay birlikte ulaştı. Haber, II. Elizabeth'in taç giyme töreninin sabahı duyuruldu."},{"id":"sputnik","y":1957,"a":false,"t":"Sputnik 1 fırlatılıyor","en":"Sputnik 1","f":"Sputnik bir plaj topu büyüklüğündeydi ve yalnızca bip sesleri gönderiyordu. ABD'de büyük bir şaşkınlık yarattı ve uzay yarışını başlattı."},{"id":"yildizligece","y":1889,"a":false,"t":"Van Gogh, Yıldızlı Gece","en":"The Starry Night","f":"Van Gogh tabloyu kaldığı hastanedeki odasının penceresinden gördüğü manzaradan yola çıkarak yaptı. Hayatı boyunca neredeyse hiç tablo satamadı."},{"id":"tutankamon","y":1922,"a":false,"t":"Tutankamon'un mezarının bulunuşu","en":"Discovery of the tomb of Tutankhamun","f":"Arkeolog Howard Carter mezarı neredeyse el değmemiş hâlde buldu. İçinden çıkan altın maske, dünyanın en ünlü arkeolojik eserlerinden biri oldu."},{"id":"dumlupinar","y":1922,"a":false,"t":"Büyük Taarruz","en":"Battle of Dumlupınar","f":"26 Ağustos'ta başlayan taarruz, 30 Ağustos'taki Başkomutanlık Meydan Muharebesi ile zafere ulaştı. Bu tarih bugün Zafer Bayramı olarak kutlanıyor."},{"id":"perseverance","y":2021,"a":false,"t":"Perseverance Mars'a iniyor","en":"Perseverance (rover)","f":"Araç yanında küçük bir helikopter de götürdü. Ingenuity adlı bu helikopter, başka bir gezegende uçan ilk motorlu araç oldu."},{"id":"modelt","y":1908,"a":false,"t":"Ford Model T","en":"Ford Model T","f":"Model T, hareketli montaj hattı sayesinde ucuzladı ve orta sınıfın arabası oldu. Henry Ford'un \"Rengi siyah olduğu sürece her renk olur\" dediği anlatılır."},{"id":"sistina","y":1512,"a":false,"t":"Sistina Şapeli tavanı","en":"Sistine Chapel ceiling","f":"Michelangelo kendini ressam değil heykeltıraş olarak görüyordu ve işi isteksizce kabul etti. Tavanı dört yılda, iskele üstünde ayakta çalışarak boyadı."},{"id":"misir","y":1798,"a":false,"t":"Napolyon'un Mısır seferi","en":"French invasion of Egypt and Syria","f":"Sefere orduyla birlikte 150'den fazla bilim insanı ve sanatçı katıldı. Ünlü Rosetta Taşı bu sefer sırasında bulundu."},{"id":"piramit","y":-2560,"a":true,"t":"Keops Piramidi","en":"Great Pyramid of Giza","f":"Yaklaşık 3800 yıl boyunca dünyanın en yüksek insan yapımı yapısı olarak kaldı. Kleopatra yaşarken bile piramit 2500 yaşındaydı."},{"id":"bagdat","y":1258,"a":false,"t":"Moğolların Bağdat'ı yağmalaması","en":"Siege of Baghdad (1258)","f":"Hülagü Han komutasındaki Moğollar Abbasi Halifeliği'ne son verdi. Beytülhikme'deki kitapların Dicle'ye atıldığı ve nehrin mürekkepten karardığı anlatılır."},{"id":"veba","y":1347,"a":false,"t":"Kara Veba","en":"Black Death","f":"Salgın ticaret gemileriyle Akdeniz limanlarına geldi. Birkaç yıl içinde Avrupa nüfusunun üçte biri ile yarısı arasında bir kısmı hayatını kaybetti.","p":"Doutielt1.jpg"},{"id":"tacmahal","y":1643,"a":true,"t":"Tac Mahal tamamlanıyor","en":"Taj Mahal"},{"id":"gaugamela","y":-331,"a":false,"t":"Gaugamela Muharebesi","en":"Battle of Gaugamela","f":"İskender sayıca çok daha büyük Pers ordusunu yendi ve Pers İmparatorluğu'nun sonunu getirdi. O sırada 25 yaşındaydı."},{"id":"kudus","y":1099,"a":false,"t":"Haçlıların Kudüs'ü alması","en":"Siege of Jerusalem (1099)","f":"Birinci Haçlı Seferi'nin sonunda kent alındı ve Kudüs Krallığı kuruldu. Kenti 1187'de Selahaddin Eyyubi geri aldı."},{"id":"selimiye","y":1575,"a":false,"t":"Selimiye Camii","en":"Selimiye Mosque","f":"Sinan bu eseri \"ustalık eserim\" diye tanımlar. Camiyi bitirdiğinde 80 yaşını geçmişti.","p":"Edirne Selimiye Mosque Exterior NW corner in 2017 3147.jpg"},{"id":"piri","y":1513,"a":false,"t":"Piri Reis Haritası","en":"Piri Reis map","f":"Harita, Amerika kıtasını gösteren günümüze ulaşmış en eski haritalardan biri. 1929'da Topkapı Sarayı'nda yeniden bulundu."},{"id":"mayflower","y":1620,"a":false,"t":"Mayflower","en":"Mayflower","f":"Gemi yaklaşık 100 yolcuyu İngiltere'den Kuzey Amerika'ya taşıdı. Yolculuk iki aydan uzun sürdü ve yolcuların yarısı ilk kışı göremedi."},{"id":"mohac","y":1526,"a":false,"t":"Mohaç Meydan Muharebesi","en":"Battle of Mohács","f":"Savaş yaklaşık iki saat sürdü. Macar Kralı II. Layoş kaçarken bir derede boğuldu."},{"id":"preveze","y":1538,"a":false,"t":"Preveze Deniz Muharebesi","en":"Battle of Preveza","f":"Bu zafer Akdeniz'de uzun süre Osmanlı üstünlüğünü sağladı. 27 Eylül bugün Türk Deniz Kuvvetleri Günü olarak kutlanıyor."},{"id":"inebahti","y":1571,"a":false,"t":"İnebahtı Deniz Muharebesi","en":"Battle of Lepanto"},{"id":"hastings","y":1066,"a":false,"t":"Hastings Muharebesi","en":"Battle of Hastings"},{"id":"agincourt","y":1415,"a":false,"t":"Agincourt Muharebesi","en":"Battle of Agincourt"},{"id":"armada","y":1588,"a":false,"t":"İspanyol Armadası","en":"Spanish Armada","p":"Loutherbourg-Spanish Armada.jpg"},{"id":"londra","y":1666,"a":false,"t":"Büyük Londra Yangını","en":"Great Fire of London"},{"id":"bostoncay","y":1773,"a":false,"t":"Boston Çay Partisi","en":"Boston Tea Party"},{"id":"balon","y":1783,"a":false,"t":"İlk insanlı balon uçuşu","en":"Montgolfier brothers","p":"Early flight 02562u (2).jpg"},{"id":"trafalgar","y":1805,"a":false,"t":"Trafalgar Muharebesi","en":"Battle of Trafalgar"},{"id":"ozgurluk","y":1830,"a":false,"t":"Delacroix, Halka Yol Gösteren Özgürlük","en":"Liberty Leading the People"},{"id":"medusa","y":1819,"a":false,"t":"Géricault, Medusa'nın Salı","en":"The Raft of the Medusa"},{"id":"gezgin","y":1818,"a":true,"t":"Friedrich, Sis Denizi Üzerindeki Gezgin","en":"Wanderer above the Sea of Fog"},{"id":"roket","y":1829,"a":false,"t":"Stephenson'ın Rocket lokomotifi","en":"Stephenson's Rocket"},{"id":"ilkfoto","y":1827,"a":true,"t":"Bilinen ilk fotoğraf","en":"View from the Window at Le Gras"},{"id":"fuar","y":1851,"a":false,"t":"Büyük Londra Sergisi","en":"The Great Exhibition"},{"id":"balaklava","y":1854,"a":false,"t":"Hafif Süvari Tugayı'nın hücumu","en":"Charge of the Light Brigade"},{"id":"gettysburg","y":1863,"a":false,"t":"Gettysburg Muharebesi","en":"Battle of Gettysburg"},{"id":"altinvivi","y":1869,"a":false,"t":"Kıtalararası demiryolunun tamamlanması","en":"First transcontinental railroad"},{"id":"almanimp","y":1871,"a":false,"t":"Alman İmparatorluğu'nun ilanı","en":"Proclamation of the German Empire"},{"id":"izlenim","y":1872,"a":false,"t":"Monet, İzlenim: Gün Doğumu","en":"Impression, Sunrise"},{"id":"telefon","y":1876,"a":false,"t":"Telefonun icadı","en":"Invention of the telephone","f":"Bell patent başvurusunu, rakibi Elisha Gray ile aynı gün yaptı. Telefondaki ilk cümlesi asistanına \"Bay Watson, buraya gelin, sizi görmek istiyorum\" oldu."},{"id":"fonograf","y":1877,"a":false,"t":"Edison'un fonografı","en":"Phonograph"},{"id":"krakatoa","y":1883,"a":false,"t":"Krakatoa patlaması","en":"1883 eruption of Krakatoa"},{"id":"brooklyn","y":1883,"a":false,"t":"Brooklyn Köprüsü açılıyor","en":"Brooklyn Bridge"},{"id":"benz","y":1886,"a":false,"t":"Benz'in ilk otomobili","en":"Benz Patent-Motorwagen"},{"id":"ertugrul","y":1890,"a":false,"t":"Ertuğrul Fırkateyni faciası","en":"Ottoman frigate Ertuğrul"},{"id":"ciglik","y":1893,"a":false,"t":"Munch, Çığlık","en":"The Scream"},{"id":"towerbridge","y":1894,"a":false,"t":"Tower Bridge açılıyor","en":"Tower Bridge"},{"id":"xray","y":1895,"a":false,"t":"İlk röntgen görüntüsü","en":"Wilhelm Röntgen","p":"First medical X-ray by Wilhelm Röntgen of his wife Anna Bertha Ludwig's hand - 18951222.jpg"},{"id":"sinema","y":1895,"a":false,"t":"Lumière Kardeşler'in ilk gösterimi","en":"Workers Leaving the Lumière Factory","f":"Gösterim Paris'te bir kafenin bodrumunda yapıldı ve on kısa filmden oluşuyordu. Trenin istasyona girişini gösteren filmlerinde seyircilerin paniğe kapıldığı anlatılır ama bu büyük ihtimalle bir efsane."},{"id":"flatiron","y":1902,"a":false,"t":"Flatiron Binası","en":"Flatiron Building"},{"id":"sanfrancisco","y":1906,"a":false,"t":"San Francisco depremi","en":"1906 San Francisco earthquake"},{"id":"kaplumbaga","y":1906,"a":false,"t":"Osman Hamdi Bey, Kaplumbağa Terbiyecisi","en":"The Tortoise Trainer"},{"id":"opucuk","y":1908,"a":false,"t":"Klimt, Öpücük","en":"The Kiss (Klimt)"},{"id":"hicaz","y":1908,"a":false,"t":"Hicaz Demiryolu","en":"Hejaz railway"},{"id":"avignon","y":1907,"a":false,"t":"Picasso, Avignonlu Kızlar","en":"Les Demoiselles d'Avignon"},{"id":"amundsen","y":1911,"a":false,"t":"Güney Kutbu'na ilk ulaşılması","en":"Amundsen's South Pole expedition","f":"Norveçli Roald Amundsen'in ekibi, İngiliz Robert Scott'un ekibini yaklaşık beş hafta farkla geçti. Scott ve ekibi dönüş yolunda hayatını kaybetti."},{"id":"saraybosna","y":1914,"a":false,"t":"Saraybosna suikastı","en":"Assassination of Archduke Franz Ferdinand"},{"id":"cesme","y":1917,"a":false,"t":"Duchamp, Çeşme","en":"Fountain (Duchamp)"},{"id":"kislasaray","y":1917,"a":false,"t":"Ekim Devrimi","en":"October Revolution"},{"id":"lindbergh","y":1927,"a":false,"t":"Lindbergh'in Atlantik uçuşu","en":"Spirit of St. Louis"},{"id":"borsa","y":1929,"a":false,"t":"1929 Borsa Çöküşü","en":"Wall Street crash of 1929"},{"id":"amerikangotik","y":1930,"a":false,"t":"Wood, Amerikan Gotiği","en":"American Gothic"},{"id":"tuzyuruyusu","y":1930,"a":false,"t":"Gandi'nin Tuz Yürüyüşü","en":"Salt March"},{"id":"kurtarici","y":1931,"a":false,"t":"Kurtarıcı İsa heykeli","en":"Christ the Redeemer (statue)"},{"id":"empire","y":1931,"a":false,"t":"Empire State Binası","en":"Empire State Building"},{"id":"gokdelenogle","y":1932,"a":false,"t":"Gökdelen Üstünde Öğle Yemeği","en":"Lunch atop a Skyscraper"},{"id":"hoover","y":1936,"a":false,"t":"Hoover Barajı","en":"Hoover Dam"},{"id":"gocmenanne","y":1936,"a":false,"t":"Göçmen Anne fotoğrafı","en":"Migrant Mother"},{"id":"hindenburg","y":1937,"a":false,"t":"Hindenburg faciası","en":"Hindenburg disaster"},{"id":"goldengate","y":1937,"a":false,"t":"Golden Gate Köprüsü","en":"Golden Gate Bridge"},{"id":"rushmore","y":1941,"a":false,"t":"Rushmore Dağı","en":"Mount Rushmore"},{"id":"dday","y":1944,"a":false,"t":"Normandiya Çıkarması","en":"Normandy landings"},{"id":"iwojima","y":1945,"a":false,"t":"Iwo Jima'da bayrak dikilmesi","en":"Raising the Flag on Iwo Jima"},{"id":"eniac","y":1946,"a":false,"t":"ENIAC bilgisayarı","en":"ENIAC"},{"id":"anitkabir","y":1953,"a":false,"t":"Anıtkabir tamamlanıyor","en":"Anıtkabir"},{"id":"photo51","y":1952,"a":false,"t":"DNA'nın \"Fotoğraf 51\"i","en":"Photo 51"},{"id":"atomium","y":1958,"a":false,"t":"Atomium","en":"Atomium"},{"id":"gagarin","y":1961,"a":false,"t":"Gagarin uzaya çıkıyor","en":"Vostok 1"},{"id":"spaceneedle","y":1962,"a":false,"t":"Space Needle","en":"Space Needle"},{"id":"corba","y":1962,"a":false,"t":"Warhol, Campbell Çorba Kutuları","en":"Campbell's Soup Cans"},{"id":"washington","y":1963,"a":false,"t":"Washington Yürüyüşü","en":"March on Washington for Jobs and Freedom"},{"id":"earthrise","y":1968,"a":false,"t":"Dünya'nın doğuşu fotoğrafı","en":"Earthrise"},{"id":"concorde","y":1969,"a":false,"t":"Concorde'un ilk uçuşu","en":"Concorde"},{"id":"woodstock","y":1969,"a":false,"t":"Woodstock Festivali","en":"Woodstock"},{"id":"mavimermer","y":1972,"a":false,"t":"Mavi Bilye fotoğrafı","en":"The Blue Marble"},{"id":"sidney","y":1973,"a":false,"t":"Sidney Opera Binası","en":"Sydney Opera House"},{"id":"bogazkoprusu","y":1973,"a":false,"t":"Boğaziçi Köprüsü açılıyor","en":"Bosphorus Bridge"},{"id":"saygon","y":1975,"a":false,"t":"Saygon'un düşüşü","en":"Fall of Saigon"},{"id":"cntower","y":1976,"a":false,"t":"CN Kulesi","en":"CN Tower","p":"CN Tower seen from its base.jpg"},{"id":"voyager","y":1977,"a":false,"t":"Voyager 1 fırlatılıyor","en":"Voyager 1"},{"id":"walkman","y":1979,"a":false,"t":"Sony Walkman","en":"Walkman","p":"Original Sony Walkman TPS-L2.JPG"},{"id":"sthelens","y":1980,"a":false,"t":"St. Helens yanardağının patlaması","en":"1980 eruption of Mount St. Helens"},{"id":"mekik","y":1981,"a":false,"t":"İlk uzay mekiği uçuşu","en":"STS-1"},{"id":"macintosh","y":1984,"a":false,"t":"İlk Macintosh","en":"Macintosh 128K"},{"id":"gameboy","y":1989,"a":false,"t":"Game Boy","en":"Game Boy"},{"id":"louvre","y":1989,"a":false,"t":"Louvre Piramidi","en":"Louvre Pyramid"},{"id":"hubble","y":1990,"a":false,"t":"Hubble Uzay Teleskobu fırlatılıyor","en":"Hubble Space Telescope"},{"id":"solukmavi","y":1990,"a":false,"t":"Soluk Mavi Nokta fotoğrafı","en":"Pale Blue Dot"},{"id":"www","y":1991,"a":false,"t":"İlk web sitesi","en":"World Wide Web","f":"Web'i CERN'de çalışan Tim Berners-Lee icat etti. İlk web sitesi web'in ne olduğunu anlatan sade bir sayfaydı ve bugün hâlâ açılabiliyor.","p":"The world’s first web server, exhibited at CERN in Geneva. DSC03299.jpg"},{"id":"yaratilis","y":1995,"a":false,"t":"Yaratılış Sütunları fotoğrafı","en":"Pillars of Creation"},{"id":"dolly","y":1996,"a":false,"t":"Klonlanan koyun Dolly","en":"Dolly (sheep)","p":"Dolly face closeup.jpg"},{"id":"guggenheim","y":1997,"a":false,"t":"Guggenheim Bilbao Müzesi","en":"Guggenheim Museum Bilbao"},{"id":"petronas","y":1998,"a":false,"t":"Petronas İkiz Kuleleri","en":"Petronas Towers","p":"Petronas Twin Towers, Kuala Lumpur.jpg"},{"id":"burjalarab","y":1999,"a":false,"t":"Burj Al Arab","en":"Burj Al Arab"},{"id":"euro","y":2002,"a":false,"t":"Euro banknot ve madeni paraları","en":"Euro coins","p":"Euro coins (16).jpg"},{"id":"taipei","y":2004,"a":false,"t":"Taipei 101","en":"Taipei 101","p":"Taipei 101 from Xiangshan 20260927 (cropped).jpg"},{"id":"burj","y":2010,"a":false,"t":"Burj Khalifa açılıyor","en":"Burj Khalifa"},{"id":"higgs","y":2012,"a":false,"t":"Higgs bozonunun keşfi","en":"Higgs boson"},{"id":"shard","y":2012,"a":false,"t":"The Shard","en":"The Shard"},{"id":"philae","y":2014,"a":false,"t":"Philae kuyruklu yıldıza iniyor","en":"Philae (spacecraft)"},{"id":"pluton","y":2015,"a":false,"t":"New Horizons'un Plüton fotoğrafı","en":"Pluto"},{"id":"webb","y":2022,"a":false,"t":"James Webb'in ilk derin alan görüntüsü","en":"Webb's First Deep Field"},{"id":"stonehenge","y":-2500,"a":true,"t":"Stonehenge","en":"Stonehenge"},{"id":"parthenon","y":-432,"a":false,"t":"Parthenon tamamlanıyor","en":"Parthenon"},{"id":"kolezyum","y":80,"a":false,"t":"Kolezyum açılıyor","en":"Colosseum"},{"id":"pantheon","y":126,"a":true,"t":"Roma'daki Pantheon","en":"Pantheon, Rome"},{"id":"terakota","y":-210,"a":true,"t":"Terakota Ordusu","en":"Terracotta Army"},{"id":"rosetta","y":-196,"a":false,"t":"Rosetta Taşı","en":"Rosetta Stone"},{"id":"hammurabi","y":-1754,"a":true,"t":"Hammurabi Kanunları","en":"Code of Hammurabi"},{"id":"nefertiti","y":-1345,"a":true,"t":"Nefertiti büstü","en":"Nefertiti Bust"},{"id":"maske","y":-1323,"a":true,"t":"Tutankamon'un maskesi","en":"Mask of Tutankhamun"},{"id":"antikythera","y":-100,"a":true,"t":"Antikythera düzeneği","en":"Antikythera mechanism"},{"id":"istar","y":-575,"a":true,"t":"İştar Kapısı","en":"Ishtar Gate"},{"id":"iskendermozaik","y":-100,"a":true,"t":"İskender Mozaiği","en":"Alexander Mosaic"},{"id":"celsus","y":117,"a":true,"t":"Celsus Kütüphanesi","en":"Library of Celsus"},{"id":"machupicchu","y":1450,"a":true,"t":"Machu Picchu","en":"Machu Picchu"},{"id":"angkor","y":1150,"a":true,"t":"Angkor Wat","en":"Angkor Wat"},{"id":"yasaksehir","y":1420,"a":false,"t":"Yasak Şehir","en":"Forbidden City"},{"id":"vasilikatedral","y":1561,"a":false,"t":"Aziz Vasil Katedrali","en":"Saint Basil's Cathedral"},{"id":"topkapi","y":1478,"a":false,"t":"Topkapı Sarayı","en":"Topkapı Palace"},{"id":"suleymaniye","y":1557,"a":false,"t":"Süleymaniye Camii","en":"Süleymaniye Mosque"},{"id":"sultanahmet","y":1616,"a":false,"t":"Sultanahmet Camii","en":"Blue Mosque, Istanbul"},{"id":"dolmabahce","y":1856,"a":false,"t":"Dolmabahçe Sarayı","en":"Dolmabahçe Palace"},{"id":"bigben","y":1859,"a":false,"t":"Big Ben","en":"Big Ben"},{"id":"pisa","y":1372,"a":false,"t":"Pisa Kulesi tamamlanıyor","en":"Leaning Tower of Pisa"},{"id":"venus","y":1485,"a":true,"t":"Botticelli, Venüs'ün Doğuşu","en":"The Birth of Venus"},{"id":"sonakşam","y":1498,"a":false,"t":"Leonardo, Son Akşam Yemeği","en":"The Last Supper (Leonardo)"},{"id":"adem","y":1512,"a":true,"t":"Michelangelo, Adem'in Yaratılışı","en":"The Creation of Adam"},{"id":"atina","y":1511,"a":true,"t":"Raffaello, Atina Okulu","en":"The School of Athens"},{"id":"davut","y":1504,"a":false,"t":"Michelangelo'nun Davut heykeli","en":"David (Michelangelo)"},{"id":"arnolfini","y":1434,"a":false,"t":"Van Eyck, Arnolfini Portresi","en":"Arnolfini Portrait"},{"id":"haz","y":1500,"a":true,"t":"Bosch, Dünyevi Zevkler Bahçesi","en":"The Garden of Earthly Delights"},{"id":"nedimeler","y":1656,"a":false,"t":"Velázquez, Nedimeler","en":"Las Meninas"},{"id":"gecedevriyesi","y":1642,"a":false,"t":"Rembrandt, Gece Devriyesi","en":"The Night Watch"},{"id":"incikupe","y":1665,"a":true,"t":"Vermeer, İnci Küpeli Kız","en":"Girl with a Pearl Earring"},{"id":"dalga","y":1831,"a":true,"t":"Hokusai, Kanagawa'da Büyük Dalga","en":"The Great Wave off Kanagawa"},{"id":"samanarabasi","y":1821,"a":false,"t":"Constable, Saman Arabası","en":"The Hay Wain"},{"id":"aycicekleri","y":1888,"a":false,"t":"Van Gogh, Ayçiçekleri","en":"Sunflowers (Van Gogh series)"},{"id":"penisilin","y":1928,"a":false,"t":"Penisilinin keşfi","en":"History of penicillin","f":"Fleming tatilden döndüğünde kirlenmiş bir petri kabında küfün bakterileri öldürdüğünü fark etti. Penisilinin ilaç olarak yaygınlaşması ise II. Dünya Savaşı'nı buldu."},{"id":"lhc","y":2008,"a":false,"t":"Büyük Hadron Çarpıştırıcısı","en":"Large Hadron Collider","p":"Views of the LHC tunnel sector 3-4, tirage 2.jpg"},{"id":"gaudi","y":1910,"a":false,"t":"Gaudí, Casa Milà","en":"Casa Milà"},{"id":"bauhaus","y":1926,"a":false,"t":"Dessau'daki Bauhaus binası","en":"Bauhaus Dessau"},{"id":"chrysler","y":1930,"a":false,"t":"Chrysler Binası","en":"Chrysler Building","p":"Chrysler Building Midtown Manhattan New York City 1932.jpg"},{"id":"konstantin","y":315,"a":false,"t":"Konstantin Takı","en":"Arch of Constantine"},{"id":"trajan","y":113,"a":false,"t":"Traianus Sütunu","en":"Trajan's Column"},{"id":"galata","y":1348,"a":false,"t":"Galata Kulesi","en":"Galata Tower"}];
 
 // Kendi görselini kullanmak istediğin olayların id'lerini buraya yaz ve dosyayı img/<id>.jpg olarak koy.
 const LOCAL_IMAGES = [];
@@ -252,6 +377,29 @@ const WORKER_URL = 'https://yil-kac.ek5440.workers.dev';
 // 'pano' = geniş panorama (önerilen), 'sphere' = tam 360 derece küre (deneysel)
 const AI_MODE = 'pano';
 
+// ===== KATEGORİLER =====
+// Bir olayı kategoriye eklemek için id'sini ilgili listeye yaz.
+const CATS = [
+  { id:'all', n:'Hepsi' },
+  { id:'tr', n:'Türkiye & Osmanlı', ids:'istanbul malazgirt tbmm canakkale viyana viyana2 ayasofya harf dumlupinar selimiye piri mohac preveze inebahti ertugrul kaplumbaga hicaz anitkabir bogazkoprusu topkapi suleymaniye sultanahmet dolmabahce galata' },
+  { id:'olay', n:'Olaylar & Savaşlar', ids:'istanbul ay bastille kolomb berlin berlinkurulus titanic malazgirt tbmm canakkale bagimsizlik cernobil napolyontac waterloo moskova magna viyana viyana2 pompeii sezar olimpiyat harf dumlupinar misir bagdat veba gaugamela kudus mohac preveze inebahti hastings agincourt armada londra bostoncay trafalgar balaklava gettysburg almanimp krakatoa ertugrul sanfrancisco saraybosna kislasaray borsa tuzyuruyusu hindenburg dday iwojima washington woodstock saygon sthelens mayflower fuar' },
+  { id:'sanat', n:'Sanat & Fotoğraf', ids:'monalisa napolyontac bagimsizlik yildizligece sistina ozgurluk medusa gezgin ilkfoto izlenim ciglik xray kaplumbaga opucuk avignon cesme amerikangotik gokdelenogle gocmenanne iwojima photo51 corba earthrise mavimermer solukmavi yaratilis venus sonakşam adem atina davut arnolfini haz nedimeler gecedevriyesi incikupe dalga samanarabasi aycicekleri nefertiti maske iskendermozaik terakota' },
+  { id:'yapi', n:'Yapılar', ids:'eyfel ayasofya suveys panama piramit tacmahal selimiye brooklyn towerbridge flatiron hicaz kurtarici empire hoover goldengate rushmore anitkabir atomium spaceneedle sidney bogazkoprusu cntower louvre guggenheim petronas burjalarab taipei burj shard stonehenge parthenon kolezyum pantheon istar celsus machupicchu angkor yasaksehir vasilikatedral topkapi suleymaniye sultanahmet dolmabahce bigben pisa gaudi bauhaus chrysler konstantin trajan galata' },
+  { id:'bilim', n:'Bilim & Keşif', ids:'ay kolomb iphone gutenberg wright everest sputnik tutankamon perseverance modelt balon roket ilkfoto telefon fonograf benz xray sinema amundsen lindbergh eniac photo51 gagarin earthrise concorde mavimermer voyager walkman mekik macintosh gameboy hubble solukmavi www yaratilis dolly euro higgs philae pluton webb antikythera penisilin lhc piri altinvivi' },
+  { id:'antik', n:'Antik Çağ', test: e => e.y < 500 }
+];
+CATS.forEach(c => { if(c.ids){ const s = new Set(c.ids.split(/\s+/)); c.test = e => s.has(e.id); } else if(!c.test) c.test = () => true; });
+const catOf = id => CATS.find(c => c.id === id) || CATS[0];
+const catPool = id => EVENTS.filter(catOf(id).test);
+
+// ===== ZORLUK =====
+// m: puan toleransı çarpanı (büyük = daha affedici), time: tur başına saniye (0 = süresiz)
+const DIFFS = {
+  kolay:  { n:'Kolay',  m:2,  time:0,  note:'Puan aralığı iki kat geniş, acele yok.' },
+  normal: { n:'Normal', m:1,  time:0,  note:'Klasik ayar, süre sınırı yok.' },
+  zor:    { n:'Zor',    m:.5, time:30, note:'Puan aralığı yarı yarıya dar ve her tur 30 saniye.' }
+};
+
 // ---------- TIME SCALE ----------
 const MINY = -3000, MAXY = 2026;
 const BP = [[-3000,0],[-500,.1],[0,.17],[1000,.31],[1500,.45],[1800,.66],[2026,1]];
@@ -261,15 +409,38 @@ const clampY = y => Math.min(MAXY, Math.max(MINY, y));
 const fmt = y => y < 0 ? `MÖ ${-y}` : `${y}`;
 const yearsBetween = (a,b) => { let d = Math.abs(a-b); if((a<0)!==(b<0)) d -= 1; return d; };
 const tol = ev => (ev.y < -500 ? 150 : ev.y < 1000 ? 80 : ev.y < 1500 ? 40 : ev.y < 1800 ? 25 : 15) + (ev.a ? 10 : 0);
-const score = (ev,g) => { const d = yearsBetween(g, ev.y); return d === 0 ? 1000 : Math.round(1000*Math.exp(-d/tol(ev))); };
+const score = (ev,g,m=1) => { const d = yearsBetween(g, ev.y); return d === 0 ? 1000 : Math.round(1000*Math.exp(-d/(tol(ev)*m))); };
 
 const TICKS = [[-3000,-500,250],[-500,0,100],[0,1000,100],[1000,1500,50],[1500,1800,25],[1800,2026,10]];
-const LABELS = [[-3000,'MÖ 3000'],[-1500,'MÖ 1500',1],[-500,'MÖ 500'],[1,'MS 1'],[500,'500',1],[1000,'1000'],[1250,'1250',1],[1500,'1500'],[1650,'1650',1],[1800,'1800'],[1900,'1900'],[1950,'1950',1],[2000,'2000',1]];
+const LABELS = [[-3000,'MÖ 3000',0,1],[-500,'MÖ 500',1],[1,'MS 1',1],[500,'500',1],[1000,'1000'],[1250,'1250',1],[1500,'1500'],[1650,'1650',1],[1800,'1800'],[1900,'1900'],[1950,'1950',1],[2000,'2000',1]];
 function buildRuler(el){
   el.innerHTML = '';
   const majors = new Set(LABELS.map(l=>l[0]).concat([0]));
   TICKS.forEach(([a,b,s]) => { for(let y=a;y<b;y+=s){ const t=document.createElement('div'); t.className='tick'+(majors.has(y)?' maj':''); t.style.left=(y2p(y)*100)+'%'; el.append(t); } });
-  LABELS.forEach(([y,txt,thin]) => { const l=document.createElement('div'); l.className='tick-label'+(thin?' thin':''); l.style.left=Math.min(96,Math.max(4,y2p(y)*100))+'%'; l.textContent=txt; el.append(l); });
+  LABELS.forEach(([y,txt,thin,edge]) => { const l=document.createElement('div'); l.className='tick-label'+(thin?' thin':''); l.style.left=edge?'6px':Math.min(96,Math.max(4,y2p(y)*100))+'%'; if(edge) l.style.transform='none'; l.textContent=txt; el.append(l); });
+}
+// Close-up ruler: linear scale around the guess and the truth, plus the 500+ point band
+function buildZoom(el, g, ev, m){
+  el.innerHTML = '';
+  const t = ev.y, d = Math.abs(g - t);
+  const half = Math.log(2) * tol(ev) * m;              // score >= 500 inside +-half years
+  const span = Math.max(d * 1.5, half * 2.6, 24);
+  const mid = (g + t) / 2, lo = mid - span/2, hi = mid + span/2;
+  const pos = y => Math.min(100, Math.max(0, (y - lo) / (hi - lo) * 100));
+  const step = [1,2,5,10,20,25,50,100,200,250,500,1000].find(s => span / s <= 7) || 1000;
+  const minor = [5,2,1].map(k => step / k).find(v => Number.isInteger(v) && span / v <= 70) || step;
+  const band = document.createElement('div'); band.className = 'band';
+  band.style.left = pos(t - half) + '%'; band.style.width = (pos(t + half) - pos(t - half)) + '%';
+  el.append(band);
+  for(let y = Math.ceil(lo / minor) * minor; y <= hi; y += minor){
+    const maj = y % step === 0;
+    const k = document.createElement('div'); k.className = 'tick' + (maj ? ' maj' : ''); k.style.left = pos(y) + '%'; el.append(k);
+    if(maj && y !== 0){ const l = document.createElement('div'); l.className = 'tick-label'; l.style.left = Math.min(95, Math.max(5, pos(y))) + '%'; l.textContent = fmt(y); el.append(l); }
+  }
+  const pin = document.createElement('div'); pin.className = 'pin sm'; pin.style.left = pos(g) + '%'; pin.innerHTML = '<b></b><span></span>';
+  const line = document.createElement('div'); line.className = 'truth-line'; line.style.left = pos(t) + '%';
+  el.append(pin, line);
+  $('bandTxt').lastChild.textContent = `500+ puan aralığı (±${Math.max(1, Math.round(half))} yıl)`;
 }
 
 // ---------- HELPERS ----------
@@ -277,25 +448,125 @@ const $ = id => document.getElementById(id);
 const rnd = n => Math.floor(Math.random()*n);
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
 const store = { get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}} };
-function show(id){ ['start','guess','reveal','over'].forEach(s => $(s).hidden = s !== id); window.scrollTo(0,0); }
-const wait = ms => new Promise(r => setTimeout(r, ms));
+const reduced = (() => { try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } })();
+let countdownTimer = 0;
+function show(id){
+  ['start','guess','reveal','over'].forEach(s => $(s).hidden = s !== id);
+  const el = $(id); el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter');
+  if(id !== 'over'){ clearInterval(countdownTimer); countdownTimer = 0; }
+  window.scrollTo(0,0);
+}
 function loadImg(src, ms=9000){ return new Promise((ok,no)=>{ const im=new Image(); const t=setTimeout(()=>no(new Error('timeout')),ms); im.onload=()=>{clearTimeout(t);ok(src)}; im.onerror=()=>{clearTimeout(t);no(new Error('img'))}; im.src=src; }); }
+const sqClass = p => p >= 900 ? 's4' : p >= 500 ? 's3' : p >= 150 ? 's2' : 's1';
+const sq = p => p >= 900 ? '🟩' : p >= 500 ? '🟨' : p >= 150 ? '🟧' : '🟥';
 
-// ---------- SOUND ----------
+// ---------- DAILY ----------
+const pad = n => String(n).padStart(2,'0');
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const keyShift = (k, n) => { const [y,m,d] = k.split('-').map(Number); return dayKey(new Date(y, m-1, d+n)); };
+const EPOCH = Date.UTC(2026, 9, 20);
+const dayNo = (k = dayKey()) => { const [y,m,d] = k.split('-').map(Number); return Math.round((Date.UTC(y,m-1,d) - EPOCH) / 864e5) + 1; };
+function hashStr(s){ let h = 1779033703 ^ s.length; for(let i=0;i<s.length;i++){ h = Math.imul(h ^ s.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return (h ^ h >>> 16) >>> 0; }
+function mulberry(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const seededShuffle = (arr, rand) => { const a = arr.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(rand()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
+// one picture from each era, so every day mixes ancient, medieval, early modern, 19th century and modern
+const ERAS = [[-1e9,500],[500,1500],[1500,1800],[1800,1900],[1900,1e9]];
+async function firstLoadable(list){
+  for(let i=0;i<list.length;i+=6){
+    let got = [];
+    try{ got = await fetchBatch(list.slice(i, i+6)); }catch(e){ continue; }
+    for(const g of got){ try{ await loadImg(g.img); return g; }catch(e){} }
+  }
+  return null;
+}
+async function pickDaily(k){
+  const rand = mulberry(hashStr('yil-kac:' + k));
+  const lists = ERAS.map(([a,b]) => seededShuffle(EVENTS.filter(e => e.y >= a && e.y < b), rand));
+  const order = seededShuffle([0,1,2,3,4], rand);
+  const picks = await Promise.all(lists.map(firstLoadable));
+  if(picks.some(p => !p)) throw new Error('few');
+  return order.map(i => ({ ...picks[i], kind:'real' }));
+}
+const dKey = k => 'yk-d-' + k;
+function loadDaily(k){ try{ return JSON.parse(store.get(dKey(k)) || 'null'); }catch(e){ return null; } }
+function saveDaily(){
+  if(!S || S.mode !== 'daily') return;
+  store.set(dKey(S.day), JSON.stringify({
+    rounds: S.rounds.map(e => ({ id:e.id, img:e.img, file:e.file, tr:e.tr, enPage:e.enPage })),
+    log: S.log, done: S.log.length >= 5
+  }));
+}
+function hydrate(o){ const e = EVENTS.find(x => x.id === o.id); return e ? { ...e, ...o, kind:'real' } : null; }
+function readStreak(){ try{ return JSON.parse(store.get('yk-streak') || 'null'); }catch(e){ return null; } }
+function getStreak(){
+  const s = readStreak(); if(!s) return { n:0, best:0 };
+  const today = dayKey(), alive = s.last === today || s.last === keyShift(today, -1);
+  return { n: alive ? s.n : 0, best: s.best || s.n };
+}
+function bumpStreak(k){
+  const s = readStreak();
+  if(s && s.last === k) return;
+  const n = s && s.last === keyShift(k, -1) ? s.n + 1 : 1;
+  store.set('yk-streak', JSON.stringify({ last:k, n, best:Math.max(n, (s && s.best) || 0) }));
+}
+
+// ---------- SOUND & HAPTICS ----------
 let ac = null, soundOn = store.get('yk-sound') !== 'off';
-function tone(f,dur,type,vol,when=0){
+function tone(f,dur,type,vol,when=0,slide=0){
   if(!soundOn) return;
   try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)();
-    const t=ac.currentTime+when,o=ac.createOscillator(),g=ac.createGain(); o.type=type; o.frequency.value=f;
-    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-    o.connect(g).connect(ac.destination); o.start(t); o.stop(t+dur+.02); }catch(e){}
+    if(ac.state === 'suspended') ac.resume();
+    const t=ac.currentTime+when,o=ac.createOscillator(),g=ac.createGain(); o.type=type; o.frequency.setValueAtTime(f,t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(f*slide,t+dur);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.006); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t+dur+.03); }catch(e){}
 }
+const buzz = p => { if(!soundOn) return; try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} };
 let lastTick = 0;
 const sfx = {
   tick(){ const n=performance.now(); if(n-lastTick<28) return; lastTick=n; tone(2200,.025,'square',.03); },
-  lock(){ tone(160,.12,'triangle',.25); tone(320,.08,'triangle',.12,.03); },
-  reveal(p){ (p>=900?[523,659,784,1046]:p>=500?[523,659,784]:p>=150?[440,523]:[220,185]).forEach((f,i)=>tone(f,.18,'triangle',.14,i*.09)); }
+  nudge(){ tone(1600,.03,'square',.025); },
+  start(){ tone(392,.14,'triangle',.12); tone(587,.2,'triangle',.12,.09); },
+  lock(){ tone(150,.18,'sine',.35,0,.55); tone(900,.03,'square',.05); buzz(15); },
+  beep(){ tone(1320,.07,'square',.05); },
+  reveal(p){
+    const notes = p>=900 ? [523,659,784,1046,1318] : p>=500 ? [523,659,784] : p>=150 ? [440,554] : [262,220,175];
+    notes.forEach((f,i) => { tone(f,.38,'sine',.13,i*.085); tone(f*2,.18,'triangle',.025,i*.085); });
+    if(p>=900) buzz([20,50,30]);
+  }
 };
+
+// ---------- FX ----------
+function burst(x, y, n=80){
+  if(reduced) return;
+  const c = $('fx'), ctx = c.getContext('2d'), dpr = window.devicePixelRatio || 1;
+  c.hidden = false; c.width = innerWidth*dpr; c.height = innerHeight*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const cols = ['#d9a441','#d9a441','#f0c870','#efe8d8','#9fdcae'];
+  const ps = Array.from({length:n}, () => { const a = Math.random()*Math.PI*2, v = 2.5 + Math.random()*7.5;
+    return { x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 3.5, life:1, d:.011 + Math.random()*.012, s:2 + Math.random()*4, r:Math.random()*6, c:cols[rnd(cols.length)] }; });
+  const step = () => {
+    ctx.clearRect(0,0,innerWidth,innerHeight); let alive = false;
+    ps.forEach(p => { p.vy += .22; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.life -= p.d; p.r += .2;
+      if(p.life > 0){ alive = true; ctx.globalAlpha = Math.min(1, p.life*1.4); ctx.fillStyle = p.c; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*1.6); ctx.restore(); } });
+    if(alive) requestAnimationFrame(step); else { ctx.clearRect(0,0,innerWidth,innerHeight); c.hidden = true; }
+  };
+  requestAnimationFrame(step);
+}
+function countUp(el, to){
+  if(reduced){ el.textContent = '+' + to; return; }
+  const t0 = performance.now(), dur = 900;
+  const step = now => { const k = Math.min(1,(now-t0)/dur); el.textContent = '+' + Math.round(to*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function rollYear(el, from, to, approx){
+  const pre = approx ? '<small>yaklaşık</small>' : '';
+  if(reduced || from === to){ el.innerHTML = pre + fmt(to); return; }
+  const t0 = performance.now(), dur = 900;
+  const step = now => { const k = Math.min(1,(now-t0)/dur), e = 1 - Math.pow(1-k,3);
+    let y = Math.round(from + (to-from)*e); if(y === 0) y = to < 0 ? -1 : 1;
+    el.innerHTML = pre + fmt(k < 1 ? y : to); if(k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
 
 // ---------- WIKIPEDIA ----------
 const BAD_FILE = /\.svg$|map|logo|flag_of|coat_of_arms|locator|diagram|seal_of|signature/i;
@@ -312,9 +583,11 @@ async function fetchBatch(evs){
   return evs.map(e => {
     const p = pages[resolve(e.en)];
     if(LOCAL_IMAGES.includes(e.id)) return { ...e, img:`img/${e.id}.jpg`, file:null, tr:p && p.langlinks && p.langlinks[0] ? p.langlinks[0].title : null, enPage:p ? p.title : e.en };
+    const tr = p && p.langlinks && p.langlinks[0] ? p.langlinks[0].title : null;
+    if(e.p) return { ...e, img:`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(e.p.replace(/ /g,'_'))}?width=1400`, file:e.p.replace(/ /g,'_'), tr, enPage:p && !p.missing ? p.title : e.en };
     if(!p || p.missing || !p.thumbnail || !p.pageimage) return null;
     if(BAD_FILE.test(p.pageimage) && e.id !== 'piri') return null;
-    return { ...e, img:p.thumbnail.source, file:p.pageimage, tr:p.langlinks && p.langlinks[0] ? p.langlinks[0].title : null, enPage:p.title };
+    return { ...e, img:p.thumbnail.source, file:p.pageimage, tr, enPage:p.title };
   }).filter(Boolean);
 }
 const infoCache = {};
@@ -339,21 +612,33 @@ function trimText(t, max=520){
   return (i > 200 ? cut.slice(0, i+1) : cut + '…');
 }
 
+// ---------- SETTINGS ----------
+const prefs = {
+  cat: catOf(store.get('yk-cat')).id,
+  diff: DIFFS[store.get('yk-diff')] ? store.get('yk-diff') : 'normal',
+  ai: store.get('yk-ai') !== 'off'
+};
+const useAI = () => !!WORKER_URL && prefs.ai && prefs.cat === 'all';
+const bestKey = d => 'yk-best' + (d === 'normal' ? '' : '-' + d);
+
 // ---------- GAME ----------
 let S = null, curY = 1500;
 function recent(){ try{ return JSON.parse(store.get('yk-recent')||'[]'); }catch(e){ return []; } }
 async function prepareRounds(){
-  const seen = new Set(recent());
-  let pool = shuffle(EVENTS.filter(e => !seen.has(e.id)));
-  if(pool.length < 30) pool = shuffle(EVENTS);
+  const seen = new Set(recent()), all = catPool(S.cat);
+  const taken = new Set(S.rounds.filter(Boolean).map(e => e.id));
+  let pool = shuffle(all.filter(e => !seen.has(e.id) && !taken.has(e.id)));
+  if(pool.length < 10) pool = shuffle(all.filter(e => !taken.has(e.id)));
+  if(pool.length < 5) pool = shuffle(all);
   const ready = [];
   while(ready.length < 5 && pool.length){
     const batch = pool.splice(0, 10);
-    const got = await fetchBatch(batch);
+    let got = [];
+    try{ got = await fetchBatch(batch); }catch(e){ if(!ready.length && !pool.length) throw e; continue; }
     const loaded = await Promise.all(got.map(g => loadImg(g.img).then(()=>g).catch(()=>null)));
     loaded.filter(Boolean).forEach(g => { if(ready.length < 5) ready.push(g); });
   }
-  if(ready.length < 5) throw new Error('few');
+  if(!ready.length) throw new Error('few');
   return ready;
 }
 // ---- AI rounds from the Worker ----
@@ -382,7 +667,7 @@ async function aiRound(){
   return { id:'ai:'+j.key, key:j.key, kind:'ai', mode:j.mode || AI_MODE, y:j.year, a:false,
            t: meta.tr || j.title, en:j.title, tr:meta.tr, enPage:meta.enPage, img:j.img, f:j.text, file:null };
 }
-// ---- fallback: real Wikipedia images ----
+// ---- real Wikipedia images ----
 async function realRound(){
   if(!S.real || !S.real.length){
     S.real = await prepareRounds();
@@ -392,7 +677,7 @@ async function realRound(){
 }
 async function makeRound(){
   let ev = null, err = null;
-  if(WORKER_URL){
+  if(S.ai){
     try{ ev = await aiRound(); }
     catch(e){
       console.warn('Yapay zeka turu alınamadı:', e);
@@ -407,28 +692,56 @@ async function makeRound(){
   getInfo(ev);
   return ev;
 }
-function prefetchNext(){ if(S && !S.next && S.r < 4) S.next = makeRound().catch(()=>null); }
+function prefetchNext(){ if(S && S.mode === 'free' && !S.next && S.r < 4) S.next = makeRound().catch(()=>null); }
 
-async function startGame(){
-  const btn = $('startBtn'), st = $('status');
-  btn.disabled = true; st.className = 'status';
-  st.textContent = WORKER_URL ? 'Sahne çiziliyor, bu birkaç saniye sürebilir…' : 'Görseller hazırlanıyor…';
+function busy(on, msg='', err=false){
+  ['dailyBtn','startBtn'].forEach(id => $(id).disabled = on);
+  const st = $('status'); st.className = 'status' + (err ? ' err' : ''); st.textContent = msg;
+  $('loadbar').hidden = !on;
+}
+const LOAD_ERR = 'Görseller yüklenemedi. İnternet bağlantını kontrol et; oyun normal bir web sitesinde (örneğin GitHub Pages) çalışır.';
+
+async function startDaily(){
+  const k = dayKey(), prog = loadDaily(k);
+  if(prog && prog.done){
+    const rounds = prog.rounds.map(hydrate).filter(Boolean);
+    S = { mode:'daily', day:k, no:dayNo(k), m:1, time:0, rounds, log:prog.log, total:prog.log.reduce((a,l)=>a+l.pts,0), r:5 };
+    return showOver();
+  }
+  busy(true, 'Günün görselleri hazırlanıyor…');
   try{
-    S = { rounds:[], r:0, total:0, log:[], real:null, next:null };
+    let rounds = prog && prog.rounds && prog.rounds.length === 5 ? prog.rounds.map(hydrate) : null;
+    if(!rounds || rounds.some(x => !x)) rounds = await pickDaily(k);
+    S = { mode:'daily', day:k, no:dayNo(k), diff:'normal', m:1, time:0, ai:false, rounds, r:0, total:0, log:[] };
+    if(prog && prog.log && prog.log.length && prog.rounds && prog.rounds.length === 5){
+      S.log = prog.log.slice(0,5); S.total = S.log.reduce((a,l)=>a+l.pts,0); S.r = S.log.length;
+    }
+    saveDaily();
+    rounds.forEach(getInfo);
+    busy(false); sfx.start(); showGuess();
+  }catch(e){ busy(false, LOAD_ERR, true); }
+}
+async function startFree(){
+  const d = DIFFS[prefs.diff];
+  S = { mode:'free', cat:prefs.cat, diff:prefs.diff, m:d.m, time:d.time, ai:useAI(), rounds:[], r:0, total:0, log:[], real:null, next:null };
+  show('start');
+  busy(true, S.ai ? 'Sahne çiziliyor, bu birkaç saniye sürebilir…' : 'Görseller hazırlanıyor…');
+  try{
     S.rounds[0] = await makeRound();
-    st.textContent = '';
-    showGuess();
-  }catch(e){
-    st.className = 'status err';
-    st.textContent = 'Görseller yüklenemedi. İnternet bağlantını kontrol et; oyun normal bir web sitesinde (örneğin GitHub Pages) çalışır.';
-  }finally{ btn.disabled = false; }
+    busy(false); sfx.start(); showGuess();
+  }catch(e){ busy(false, LOAD_ERR, true); }
+}
+function modeLabel(){ return S.mode === 'daily' ? `GÜNÜN OYUNU #${S.no}` : `${catOf(S.cat).n.toLocaleUpperCase('tr')} · ${DIFFS[S.diff].n.toLocaleUpperCase('tr')}`; }
+function renderDots(el){
+  el.innerHTML = '';
+  for(let i=0;i<5;i++){ const d = document.createElement('i'); if(S.log[i]) d.className = sqClass(S.log[i].pts); else if(i === S.r) d.className = 'cur'; el.append(d); }
 }
 function setPhoto(frameImg, blurEl, src){ frameImg.src = src; blurEl.style.backgroundImage = `url("${src}")`; }
 let viewer = null;
 function showPicture(ev){
   if(viewer){ try{ viewer.destroy(); }catch(e){} viewer = null; }
   const w = $('aiWarn');
-  w.hidden = !(WORKER_URL && ev.kind !== 'ai');
+  w.hidden = !(S.ai && ev.kind !== 'ai');
   w.textContent = `Yapay zeka sahnesi alınamadı, gerçek görsel gösteriliyor. Sebep: ${ev.aiErr || 'bilinmiyor'}`;
   const useP = ev.kind === 'ai' && window.pannellum;
   $('frame').hidden = useP; $('pano').hidden = !useP; $('panoHint').hidden = !useP;
@@ -452,16 +765,41 @@ function setYear(y, dir=0, silent=false){
   $('needle').style.left = (y2p(y)*100) + '%';
   const r = $('ruler'); r.setAttribute('aria-valuenow', y); r.setAttribute('aria-valuetext', fmt(y));
 }
+
+// ---- Zor mode timer ----
+let timerRAF = 0;
+function stopTimer(){ cancelAnimationFrame(timerRAF); timerRAF = 0; }
+function startTimer(){
+  stopTimer();
+  const box = $('timer'); box.hidden = !S.time; box.classList.remove('low');
+  if(!S.time) return;
+  const total = S.time*1000, end = performance.now() + total; let lastSec = S.time + 1;
+  const step = now => {
+    const left = Math.max(0, end - now), sec = Math.ceil(left/1000);
+    $('timerBar').style.transform = `scaleX(${left/total})`; $('timerTxt').textContent = sec + ' sn';
+    box.classList.toggle('low', sec <= 5);
+    if(sec !== lastSec){ lastSec = sec; if(sec <= 5 && sec > 0) sfx.beep(); }
+    if(left <= 0){ timerRAF = 0; lockGuess(); return; }
+    timerRAF = requestAnimationFrame(step);
+  };
+  timerRAF = requestAnimationFrame(step);
+}
+
 function showGuess(){
   const ev = S.rounds[S.r];
-  $('roundNo').textContent = S.r + 1; $('scoreNow').textContent = S.total;
+  $('scoreNow').textContent = S.total;
+  $('modeTag').textContent = modeLabel();
+  renderDots($('dots'));
   const r = $('ruler'); buildRuler(r);
   const n = document.createElement('div'); n.className='needle'; n.id='needle'; n.innerHTML='<div class="grip"></div>'; r.append(n);
+  closeTyping(false);
   curY = 1500; setYear(1500, 0, true);
   $('lockBtn').disabled = false;
+  $('skipBtn').hidden = S.mode === 'daily';
   show('guess');
   showPicture(ev);
   prefetchNext();
+  startTimer();
 }
 async function takeNext(){
   const p = S.next; S.next = null;
@@ -469,27 +807,33 @@ async function takeNext(){
   return ev || await makeRound();
 }
 async function skipRound(){
-  const b = $('skipBtn'); if(b.disabled) return;
-  b.disabled = true; b.textContent = 'Yeni görsel geliyor…';
+  const b = $('skipBtn'); if(b.disabled || S.mode === 'daily') return;
+  b.disabled = true; b.textContent = 'Yeni görsel geliyor…'; stopTimer();
   try{ S.rounds[S.r] = await takeNext(); showGuess(); }
-  catch(e){}
+  catch(e){ startTimer(); }
   finally{ b.disabled = false; b.textContent = 'Bu görseli geç'; }
 }
 function lockGuess(){
-  if($('guess').hidden) return;
+  if($('guess').hidden || $('lockBtn').disabled) return;
+  closeTyping(true);
+  stopTimer(); $('lockBtn').disabled = true;
   sfx.lock();
-  const ev = S.rounds[S.r], g = curY, pts = score(ev, g);
+  const ev = S.rounds[S.r], g = curY, pts = score(ev, g, S.m);
   S.total += pts; S.log.push({ g, pts });
+  saveDaily();
   showReveal(ev, g, pts);
 }
 function showReveal(ev, g, pts){
-  $('roundNo2').textContent = S.r + 1;
+  $('modeTag2').textContent = modeLabel();
+  $('scoreNow2').textContent = S.total;
+  renderDots($('dots2'));
   setPhoto($('photo2'), $('blur2'), ev.img);
   const d = yearsBetween(g, ev.y);
   const b = $('badge');
   b.textContent = d === 0 ? 'Tam isabet!' : pts >= 900 ? 'Neredeyse!' : pts >= 500 ? 'Fena değil' : pts >= 150 ? 'Uzak' : 'Çok uzak';
   b.style.color = pts >= 900 ? 'var(--brass)' : pts >= 500 ? 'var(--good)' : pts >= 150 ? 'var(--ink)' : 'var(--truth)';
-  $('truthYear').innerHTML = (ev.a ? '<small>yaklaşık</small>' : '') + fmt(ev.y);
+  b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+  rollYear($('truthYear'), g, ev.y, ev.a);
   $('label').textContent = ev.t;
   $('youGuess').innerHTML = '';
   const gb = document.createElement('b'); gb.textContent = fmt(g);
@@ -502,17 +846,21 @@ function showReveal(ev, g, pts){
   const line = document.createElement('div'); line.className='truth-line'; line.style.left=(y2p(g)*100)+'%';
   r2.append(bar, line);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ const a=y2p(g)*100, c=y2p(ev.y)*100; line.style.left=c+'%'; bar.style.left=Math.min(a,c)+'%'; bar.style.width=Math.abs(c-a)+'%'; }));
-  setTimeout(()=>sfx.reveal(pts), 350);
+  buildZoom($('zoomR'), g, ev, S.m);
+  setTimeout(()=>{
+    sfx.reveal(pts);
+    if(pts >= 900 && !$('reveal').hidden){ const rc = pt.getBoundingClientRect(); burst(rc.left + rc.width/2, rc.top + rc.height/2); }
+  }, 350);
 
   const f = $('fact'); f.hidden = !ev.f; f.textContent = ev.f || '';
-  const ex = $('extract'); ex.textContent = 'Yükleniyor…';
+  const ex = $('extract'); ex.textContent = 'Yükleniyor…'; ex.hidden = false;
   const wl = $('wikiLink'); wl.href = ev.tr ? `https://tr.wikipedia.org/wiki/${encodeURIComponent(ev.tr.replace(/ /g,'_'))}` : `https://en.wikipedia.org/wiki/${encodeURIComponent((ev.enPage||ev.en).replace(/ /g,'_'))}`;
   wl.textContent = ev.tr ? "Vikipedi'de oku ↗" : "Vikipedi'de oku (İngilizce) ↗";
   const cr = $('credit'); cr.hidden = !ev.file; if(ev.file) cr.href = `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(ev.file)}`;
   $('aiNote').hidden = ev.kind !== 'ai';
-  const token = S.r;
+  const token = S.r, game = S;
   getInfo(ev).then(info => {
-    if(!S || S.r !== token) return;
+    if(S !== game || S.r !== token) return;
     ex.textContent = info.text ? trimText(info.text) : '';
     ex.hidden = !info.text;
     if(info.url){ wl.href = info.url; wl.textContent = info.tr ? "Vikipedi'de oku ↗" : "Vikipedi'de oku (İngilizce) ↗"; }
@@ -522,17 +870,13 @@ function showReveal(ev, g, pts){
   show('reveal');
   $('nextBtn').focus({preventScroll:true});
 }
-function countUp(el, to){
-  const t0 = performance.now(), dur = 900;
-  const step = now => { const k = Math.min(1,(now-t0)/dur); el.textContent = '+' + Math.round(to*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(step); };
-  requestAnimationFrame(step);
-}
 let advancing = false;
 async function nextRound(){
   if(advancing) return;
-  if(S.r >= 4){ S.r++; return showOver(); }
+  if(S.r >= 4){ S.r = 5; return showOver(); }
+  if(S.mode === 'daily'){ S.r++; return showGuess(); }
   advancing = true;
-  const b = $('nextBtn'); b.disabled = true; b.textContent = WORKER_URL ? 'Sahne çiziliyor…' : 'Hazırlanıyor…';
+  const b = $('nextBtn'); b.disabled = true; b.textContent = S.ai ? 'Sahne çiziliyor…' : 'Hazırlanıyor…';
   try{
     S.rounds[S.r + 1] = await takeNext();
     S.r++;
@@ -541,15 +885,33 @@ async function nextRound(){
     b.textContent = 'Tekrar dene';
   }finally{ b.disabled = false; advancing = false; }
 }
-const sq = p => p >= 900 ? '🟩' : p >= 500 ? '🟨' : p >= 150 ? '🟧' : '🟥';
+function tickCountdown(){
+  const now = new Date(), next = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+  const s = Math.max(0, Math.floor((next - now)/1000));
+  $('countdown').textContent = `${pad(Math.floor(s/3600))}:${pad(Math.floor(s/60)%60)}:${pad(s%60)}`;
+  if(s === 0){ clearInterval(countdownTimer); countdownTimer = 0; }
+}
 function showOver(){
-  const prev = +(store.get('yk-best')||0);
-  if(S.total > prev) store.set('yk-best', S.total);
+  stopTimer();
+  const daily = S.mode === 'daily';
+  if(daily){ saveDaily(); bumpStreak(S.day); }
+  let prev = 0;
+  if(!daily){ prev = +(store.get(bestKey(S.diff))||0); if(S.total > prev) store.set(bestKey(S.diff), S.total); }
+  $('overEyebrow').textContent = daily ? `Günün Oyunu #${S.no} · toplam puan` : `${catOf(S.cat).n} · ${DIFFS[S.diff].n} · toplam puan`;
   $('bigTotal').innerHTML = `${S.total}<small> / 5000</small>`;
-  $('overBest').textContent = S.total > prev && prev > 0 ? `Yeni rekor! Eskisi ${prev} idi.` : `En iyi skorun: ${Math.max(prev, S.total)}`;
+  $('squares').textContent = S.log.map(l => sq(l.pts)).join('');
+  const ob = $('overBest');
+  if(daily){ ob.textContent = 'Yarın yeni 5 görsel gelecek. Sonucu paylaşıp arkadaşlarınla kıyasla.'; }
+  else ob.textContent = S.total > prev && prev > 0 ? `Yeni rekor! Eskisi ${prev} idi.` : `${DIFFS[S.diff].n} modunda en iyi skorun: ${Math.max(prev, S.total)}`;
+  $('dailyBox').hidden = !daily;
+  if(daily){
+    const st = getStreak();
+    $('overStreak').textContent = `🔥 ${st.n} günlük seri` + (st.best > st.n ? ` · en uzun ${st.best}` : '');
+  }
   const ul = $('recap'); ul.innerHTML = '';
   S.rounds.forEach((ev,i) => {
-    const li = document.createElement('li');
+    if(!S.log[i]) return;
+    const li = document.createElement('li'); li.style.animationDelay = (i*70) + 'ms';
     const im = document.createElement('img'); im.className='th'; im.src=ev.img; im.alt='';
     const mid = document.createElement('div');
     const t = document.createElement('div'); t.className='t'; t.textContent = ev.t;
@@ -560,23 +922,90 @@ function showOver(){
     const s = document.createElement('span'); s.className='s'; s.textContent = '+' + S.log[i].pts;
     li.append(im, mid, s); ul.append(li);
   });
+  $('againBtn').textContent = daily ? 'Serbest oyna' : 'Tekrar oyna';
   $('copied').textContent = '';
-  updateBest();
   show('over');
+  if(daily){ tickCountdown(); countdownTimer = setInterval(tickCountdown, 1000); }
 }
-function shareText(){ return `Yıl Kaç? ${S.total}/5000\n${S.log.map(l=>sq(l.pts)).join('')}\n${location.href}`; }
-function updateBest(){
-  const b = +(store.get('yk-best')||0);
-  $('bestLine').textContent = b ? `En iyi skorun: ${b}` : `${EVENTS.length} görsel · MÖ 2560'tan bugüne`;
+function shareText(){
+  const url = /^https?:/.test(location.protocol) ? '\n' + location.origin + location.pathname : '';
+  const sqs = S.log.map(l=>sq(l.pts)).join('');
+  if(S.mode === 'daily'){ const st = getStreak(); return `Yıl Kaç? #${S.no} · ${S.total}/5000\n${sqs}${st.n > 1 ? `\n🔥 ${st.n} günlük seri` : ''}${url}`; }
+  return `Yıl Kaç? · ${catOf(S.cat).n} · ${DIFFS[S.diff].n}\n${S.total}/5000 ${sqs}${url}`;
+}
+
+// ---------- MENU ----------
+function renderMenu(){
+  const k = dayKey(), prog = loadDaily(k), st = getStreak();
+  $('dNo').textContent = dayNo(k);
+  const db = $('dailyBtn'), ds = $('dState');
+  if(prog && prog.done){
+    const tot = prog.log.reduce((a,l)=>a+l.pts,0);
+    ds.innerHTML = ''; const bb = document.createElement('b'); bb.textContent = `${tot} puan`;
+    ds.append('Bugünü bitirdin: ', bb, ' ' + prog.log.map(l=>sq(l.pts)).join('') + '. Yarın yeni görseller gelecek.');
+    db.textContent = 'Sonucu gör';
+  }else if(prog && prog.log && prog.log.length){
+    ds.textContent = `Yarıda bıraktın, ${prog.log.length}/5 tur oynandı.`;
+    db.textContent = 'Kaldığın yerden devam';
+  }else{
+    ds.textContent = 'Her dönemden bir görsel. Günde bir kez oynanır, sonucu arkadaşlarınla kıyasla.';
+    db.textContent = 'Bugünü oyna';
+  }
+  $('streakLine').textContent = st.n ? `🔥 ${st.n} günlük seri` : '';
+
+  const cc = $('catChips'); cc.innerHTML = '';
+  CATS.forEach(c => {
+    const b = document.createElement('button'); b.className = 'chip'; b.type = 'button';
+    b.setAttribute('aria-pressed', c.id === prefs.cat);
+    b.append(c.n); const sm = document.createElement('small'); sm.textContent = catPool(c.id).length; b.append(sm);
+    b.onclick = () => { prefs.cat = c.id; store.set('yk-cat', c.id); renderMenu(); };
+    cc.append(b);
+  });
+  const sg = $('diffSeg'); sg.innerHTML = '';
+  Object.entries(DIFFS).forEach(([id,d]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = d.n; b.setAttribute('aria-pressed', id === prefs.diff);
+    b.onclick = () => { prefs.diff = id; store.set('yk-diff', id); renderMenu(); };
+    sg.append(b);
+  });
+  $('diffNote').textContent = DIFFS[prefs.diff].note;
+  const row = $('aiRow'), tg = $('aiToggle');
+  row.hidden = !WORKER_URL;
+  const allCat = prefs.cat === 'all';
+  tg.checked = prefs.ai && allCat; tg.disabled = !allCat; row.classList.toggle('off', !allCat);
+  $('aiNoteStart').textContent = allCat ? "Bazı turlarda Vikipedi'den çizilen panoramik sahneler gelir. Yüklenmesi biraz sürebilir." : "Sadece 'Hepsi' kategorisinde kullanılabilir.";
+  const best = +(store.get(bestKey(prefs.diff))||0);
+  $('bestLine').textContent = best ? `En iyi: ${best}` : `${EVENTS.length} görsel`;
+}
+function goMenu(){
+  stopTimer(); closeTyping(false);
+  if(viewer){ try{ viewer.destroy(); }catch(e){} viewer = null; }
+  busy(false); renderMenu(); show('start');
 }
 
 // ---------- INPUT ----------
+function openTyping(){
+  if($('guess').hidden) return;
+  const i = $('yrIn'); i.value = Math.abs(curY);
+  $('yr').hidden = true; i.hidden = false; i.focus(); i.select();
+}
+function closeTyping(apply){
+  const i = $('yrIn'); if(i.hidden) return;
+  if(apply){
+    let s = i.value.trim().replace(/\s+/g,'').replace(/\./g,''), neg = curY < 0;
+    if(/^(-|m[öo])/i.test(s)){ neg = true; s = s.replace(/^(-|m[öo])/i,''); }
+    else if(/^(\+|ms)/i.test(s)){ neg = false; s = s.replace(/^(\+|ms)/i,''); }
+    const n = parseInt(s, 10);
+    if(!isNaN(n) && n > 0) setYear(neg ? -n : n, neg ? -1 : 1, true);
+  }
+  i.hidden = true; $('yr').hidden = false;
+}
 (function(){
   const r = $('ruler'); let drag = false;
   const at = e => { const b = r.getBoundingClientRect(); return p2y((e.clientX-b.left)/b.width); };
-  r.addEventListener('pointerdown', e => { drag = true; r.setPointerCapture(e.pointerId); setYear(at(e)); });
+  r.addEventListener('pointerdown', e => { closeTyping(true); drag = true; r.setPointerCapture(e.pointerId); setYear(at(e)); });
   r.addEventListener('pointermove', e => { if(drag) setYear(at(e)); });
   ['pointerup','pointercancel'].forEach(t => r.addEventListener(t, () => drag = false));
+  r.addEventListener('wheel', e => { e.preventDefault(); const s = (e.deltaY || e.deltaX) < 0 ? 1 : -1, m = e.shiftKey ? 10 : 1; setYear(curY + s*m, s); }, { passive:false });
   r.addEventListener('keydown', e => {
     const m = e.shiftKey ? 10 : 1;
     if(e.key==='ArrowRight'||e.key==='ArrowUp'){ e.preventDefault(); setYear(curY+m, 1); }
@@ -585,33 +1014,57 @@ function updateBest(){
     if(e.key==='PageDown'){ e.preventDefault(); setYear(curY-50, -1); }
   });
   r.setAttribute('aria-valuemin', MINY); r.setAttribute('aria-valuemax', MAXY);
-  document.querySelectorAll('.nudges button').forEach(b => b.onclick = () => { const d=+b.dataset.d; setYear(curY+d, d); });
+  // nudge buttons: tap for one step, hold to repeat
+  document.querySelectorAll('.nudges button').forEach(b => {
+    const d = +b.dataset.d; let hold = 0, rep = 0, fromPointer = false;
+    const stepOnce = () => { setYear(curY + d, Math.sign(d), Math.abs(d) < 10); if(Math.abs(d) < 10) sfx.nudge(); };
+    const stop = () => { clearTimeout(hold); clearInterval(rep); hold = rep = 0; };
+    b.addEventListener('pointerdown', e => { if(e.button) return; closeTyping(true); fromPointer = true; stepOnce(); stop(); hold = setTimeout(() => { rep = setInterval(stepOnce, 70); }, 380); });
+    ['pointerup','pointerleave','pointercancel'].forEach(t => b.addEventListener(t, stop));
+    b.addEventListener('click', () => { if(fromPointer){ fromPointer = false; return; } stepOnce(); });
+    b.addEventListener('contextmenu', e => e.preventDefault());
+  });
+  $('yr').onclick = openTyping;
+  $('era').onclick = () => { closeTyping(true); setYear(-curY, -Math.sign(curY)); sfx.nudge(); };
+  const yi = $('yrIn');
+  yi.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); closeTyping(true); $('lockBtn').focus({preventScroll:true}); }
+    if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeTyping(false); }
+  });
+  yi.addEventListener('blur', () => closeTyping(true));
   const open = src => { $('lbImg').src = src; $('lightbox').hidden = false; };
   $('frame').onclick = () => open($('photo').src);
   $('frame2').onclick = () => open($('photo2').src);
   $('lightbox').onclick = () => $('lightbox').hidden = true;
+  if(matchMedia('(hover:hover)').matches) $('dialHint').textContent = 'Yıla tıklayıp yazabilirsin · cetvelde tekerlek ve ok tuşları da çalışır';
 })();
 
-updateBest();
-$('startBtn').onclick = startGame;
+$('dailyBtn').onclick = startDaily;
+$('startBtn').onclick = startFree;
 $('lockBtn').onclick = lockGuess;
 $('skipBtn').onclick = skipRound;
 $('nextBtn').onclick = nextRound;
-$('againBtn').onclick = () => { show('start'); startGame(); };
-$('soundBtn').textContent = soundOn ? 'ses açık' : 'ses kapalı';
-$('soundBtn').onclick = () => { soundOn=!soundOn; store.set('yk-sound', soundOn?'on':'off'); $('soundBtn').textContent = soundOn ? 'ses açık' : 'ses kapalı'; };
+$('againBtn').onclick = () => startFree();
+$('menuBtn').onclick = goMenu;
+document.querySelectorAll('.brand').forEach(b => b.onclick = goMenu);
+$('aiToggle').onchange = e => { prefs.ai = e.target.checked; store.set('yk-ai', prefs.ai ? 'on' : 'off'); };
+const soundLabel = () => soundOn ? 'ses açık' : 'ses kapalı';
+$('soundBtn').textContent = soundLabel();
+$('soundBtn').onclick = () => { soundOn=!soundOn; store.set('yk-sound', soundOn?'on':'off'); $('soundBtn').textContent = soundLabel(); };
 $('shareBtn').onclick = async () => {
   const t = shareText();
-  try{ await navigator.clipboard.writeText(t); $('copied').textContent = 'Kopyalandı.'; }
+  try{ await navigator.clipboard.writeText(t); $('copied').textContent = 'Kopyalandı, istediğin yere yapıştırabilirsin.'; }
   catch(e){ $('copied').textContent = t; }
 };
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape'){ $('lightbox').hidden = true; return; }
   if(e.key !== 'Enter') return;
-  if(document.activeElement && ['BUTTON','A'].includes(document.activeElement.tagName)) return;
+  const a = document.activeElement;
+  if(a && ['BUTTON','A','INPUT'].includes(a.tagName)) return;
   if(!$('guess').hidden){ e.preventDefault(); lockGuess(); }
   else if(!$('reveal').hidden){ e.preventDefault(); nextRound(); }
 });
+renderMenu();
 </script>
 </body>
 </html>
